@@ -16,7 +16,7 @@ typedef enum {
 	TOKEN_BACKTICK,    // `
 	TOKEN_EXCLAMATION, // !
 	TOKEN_GREATER_THAN,// >
-	TOKEN_BACKSLASH,   // \\
+	TOKEN_BACKSLASH,   // \.
 	TOKEN_EOF,         // End of File
 } TokenType;
 
@@ -25,4 +25,6 @@ typedef struct {
 	char* value;
 	struct list_head list;
 } Token;
+
+void tokenize_file(FILE* file, struct list_head* output);
 
