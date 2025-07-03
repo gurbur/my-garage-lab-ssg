@@ -227,7 +227,9 @@ static AstNode* parse_list_item(ParserState* p, int current_indent) {
 static AstNode* parse_list(ParserState* p, int expected_indent) {
 	struct list_head* temp_pos = p->current_node;
 	for (int i = 0; i < expected_indent; i++) {
-		temp_pos = temp_pos->next;
+		if (temp_pos->next != p->head) {
+			temp_pos = temp_pos->next;
+		}
 	}
 	Token* start_token = list_entry(temp_pos->next, Token, list);
 
@@ -239,7 +241,7 @@ static AstNode* parse_list(ParserState* p, int expected_indent) {
 
 	while (peek_token(p)) {
 		int current_indent = count_indent(p);
-		if (current_indent < expected_indent) {
+		if (current_indent != expected_indent) {
 			break;
 		}
 
@@ -247,9 +249,17 @@ static AstNode* parse_list(ParserState* p, int expected_indent) {
 			consume_token(p);
 		}
 
-		Token* current_item_marker = peek_token(p);
+		Token* marker = peek_token(p);
+		if (!marker) break;
 
-		if (current_item_marker && (current_item_marker->type == TOKEN_DASH || current_item_marker->type == TOKEN_ASTERISK || current_item_marker->type == TOKEN_NUMBER)) {
+		bool type_match = false;
+		if (list_type == NODE_UNORDERED_LIST && (marker->type == TOKEN_DASH || marker->type == TOKEN_ASTERISK)) {
+			type_match = true;
+		} else if (list_type == NODE_ORDERED_LIST && marker->type == TOKEN_NUMBER) {
+			type_match = true;
+		}
+
+		if (type_match) {
 			AstNode* item_node = parse_list_item(p, current_indent);
 			add_child_node(list_node, item_node);
 		} else {

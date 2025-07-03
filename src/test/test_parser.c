@@ -29,6 +29,43 @@ const char* test_markdown_content =
 	"1. Ordered List Item 1\n"
 	"2. Item 2\n";
 
+static const char* token_type_to_string(TokenType type) {
+    switch (type) {
+        case TOKEN_HASH: return "HASH";
+        case TOKEN_ASTERISK: return "ASTERISK";
+        case TOKEN_TEXT: return "TEXT";
+        case TOKEN_NUMBER: return "NUMBER";
+        case TOKEN_DOT: return "DOT";
+        case TOKEN_DASH: return "DASH";
+        case TOKEN_NEWLINE: return "NEWLINE";
+        case TOKEN_TAB: return "TAB";
+        case TOKEN_LBRACKET: return "LBRACKET";
+        case TOKEN_RBRACKET: return "RBRACKET";
+        case TOKEN_LPAREN: return "LPAREN";
+        case TOKEN_RPAREN: return "RPAREN";
+        case TOKEN_BACKTICK: return "BACKTICK";
+        case TOKEN_EXCLAMATION: return "EXCLAMATION";
+        case TOKEN_GREATER_THAN: return "GREATER_THAN";
+        case TOKEN_BACKSLASH: return "BACKSLASH";
+        case TOKEN_EOF: return "EOF";
+        default: return "UNKNOWN";
+    }
+}
+
+static void print_tokens(struct list_head* head) {
+    Token* current_token;
+    int count = 1;
+    printf("\n--- Tokenizer Result ---\n");
+    list_for_each_entry(current_token, head, list) {
+        printf("Token %2d: [%-12s]", count++, token_type_to_string(current_token->type));
+        if (current_token->value) {
+            printf(" Value: \"%s\"\n", current_token->value);
+        } else {
+            printf("\n");
+        }
+    }
+    printf("------------------------\n");
+}
 
 static void free_token_list(struct list_head* head) {
 	Token *current_token, *temp;
@@ -102,6 +139,8 @@ int main() {
 	tokenize_file(test_file, &token_list);
 	printf("Tokenizer work done.\n");
 	fclose(test_file);
+
+	print_tokens(&token_list);
 
 	// run parser
 	printf("\n--- runnig Parser ---\n");

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <ctype.h>
 
 #include "../include/list_head.h"
 #include "../include/tokenizer.h"
@@ -14,11 +15,7 @@ static void create_and_add_token(TokenType type, char* value, struct list_head* 
 	}
 
 	new_token->type = type;
-	if (value != NULL) {
-		new_token->value = strdup(value);
-	} else {
-		new_token->value = NULL;
-	}
+	new_token->value = value ? strdup(value) : NULL;
 
 	list_add_tail(&new_token->list, head);
 }
@@ -43,14 +40,18 @@ static void flush_dynamic_buffer(char** buffer, int* index, int* buffer_capacity
 		(*buffer)[*index] = '\0';
 		create_and_add_token(TOKEN_TEXT, *buffer, head);
 	}
-
 	if (*buffer) {
 		free(*buffer);
 		*buffer = NULL;
 	}
-
 	*index = 0;
 	*buffer_capacity = 0;
+}
+
+static int fpeek(FILE* stream) {
+	int c = fgetc(stream);
+	ungetc(c, stream);
+	return c;
 }
 
 void tokenize_file(FILE *file, struct list_head *output) {
@@ -75,7 +76,8 @@ void tokenize_file(FILE *file, struct list_head *output) {
 			case '\\':// TOKEN_BACKSLASH
 				flush_dynamic_buffer(&text_buffer, &text_buffer_idx, &text_buffer_capacity, output);
 
-				if (current_char == '#') create_and_add_token(TOKEN_HASH, NULL, output);
+				if (current_char == '.') create_and_add_token(TOKEN_DOT, NULL, output);
+				else if (current_char == '#') create_and_add_token(TOKEN_HASH, NULL, output);
 				else if (current_char == '*') create_and_add_token(TOKEN_ASTERISK, NULL, output);
 				else if (current_char == '-') create_and_add_token(TOKEN_DASH, NULL, output);
 				else if (current_char == '\n') create_and_add_token(TOKEN_NEWLINE, NULL, output);
@@ -88,6 +90,11 @@ void tokenize_file(FILE *file, struct list_head *output) {
 				else if (current_char == '>') create_and_add_token(TOKEN_GREATER_THAN, NULL, output);
 				else if (current_char == '\\') create_and_add_token(TOKEN_BACKSLASH, NULL, output);
 
+				break;
+
+			case '.':
+				flush_dynamic_buffer(&text_buffer, &text_buffer_idx, &text_buffer_capacity, output);
+				create_and_add_token(TOKEN_DOT, NULL, output);
 				break;
 
 			case '`': // TOKEN_BACKTICK
@@ -147,15 +154,33 @@ void tokenize_file(FILE *file, struct list_head *output) {
 				break;
 
 			default:
-				if (!text_buffer) {
-					text_buffer_capacity = 256;
-					text_buffer = malloc(text_buffer_capacity);
+				if (isdigit(current_char)) {
+					flush_dynamic_buffer(&text_buffer, &text_buffer_idx, &text_buffer_capacity, output);
+
 					if (!text_buffer) {
-						perror("Failed to allocate initial buffer");
-						exit(EXIT_FAILURE);
+						text_buffer_capacity = 32;
+						text_buffer = malloc(text_buffer_capacity);
 					}
+					append_to_buffer(&text_buffer, &text_buffer_idx, &text_buffer_capacity, current_char);
+
+					while (isdigit(fpeek(file))) {
+						append_to_buffer(&text_buffer, &text_buffer_idx, &text_buffer_capacity, fgetc(file));
+					}
+					if (text_buffer && text_buffer_idx > 0) {
+						text_buffer[text_buffer_idx] = '\0';
+						create_and_add_token(TOKEN_NUMBER, text_buffer, output);
+						free(text_buffer);
+						text_buffer = NULL;
+						text_buffer_idx = 0;
+						text_buffer_capacity = 0;
+					}
+				} else {
+					if (!text_buffer) {
+						text_buffer_capacity = 256;
+						text_buffer = malloc(text_buffer_capacity);
+					}
+					append_to_buffer(&text_buffer, &text_buffer_idx, &text_buffer_capacity, current_char);
 				}
-				append_to_buffer(&text_buffer, &text_buffer_idx, &text_buffer_capacity, current_char);
 				break;
 		}
 	}
