@@ -1,5 +1,3 @@
-#define MAX_LINE_LENGTH 2048
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,7 +64,6 @@ void tokenize_file(FILE *file, struct list_head *output) {
 			case '#': // TOKEN_HASH
 			case '*': // TOKEN_ASTERISK
 			case '-': // TOKEN_DASH
-			case '.': // TOKEN_DOT
 			case '\n':// TOKEN_NEWLINE
 			case '\t':// TOKEN_TAB
 			case '[': // TOKEN_LBRACKET
@@ -81,7 +78,6 @@ void tokenize_file(FILE *file, struct list_head *output) {
 				if (current_char == '#') create_and_add_token(TOKEN_HASH, NULL, output);
 				else if (current_char == '*') create_and_add_token(TOKEN_ASTERISK, NULL, output);
 				else if (current_char == '-') create_and_add_token(TOKEN_DASH, NULL, output);
-				else if (current_char == '.') create_and_add_token(TOKEN_DOT, NULL, output);
 				else if (current_char == '\n') create_and_add_token(TOKEN_NEWLINE, NULL, output);
 				else if (current_char == '\t') create_and_add_token(TOKEN_TAB, NULL, output);
 				else if (current_char == '[') create_and_add_token(TOKEN_LBRACKET, NULL, output);
@@ -104,6 +100,16 @@ void tokenize_file(FILE *file, struct list_head *output) {
 					create_and_add_token(TOKEN_BACKTICK, NULL, output);
 					create_and_add_token(TOKEN_BACKTICK, NULL, output);
 					create_and_add_token(TOKEN_BACKTICK, NULL, output);
+
+					while ((current_char = fgetc(file)) != EOF && current_char != '\n') {
+						if (!text_buffer) {
+							text_buffer_capacity = 32;
+							text_buffer = malloc(text_buffer_capacity);
+						}
+						append_to_buffer(&text_buffer, &text_buffer_idx, &text_buffer_capacity, current_char);
+					}
+					flush_dynamic_buffer(&text_buffer, &text_buffer_idx, &text_buffer_capacity, output);
+					create_and_add_token(TOKEN_NEWLINE, NULL, output);
 
 					bool code_block_closed = false;
 					while (!code_block_closed && (current_char = fgetc(file)) != EOF) {

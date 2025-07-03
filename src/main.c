@@ -1,10 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "include/list_head.h"
 #include "include/tokenizer.h"
-//#include "include/parser.h"
+#include "include/parser.h"
 //#include "include/html_generator.h"
 //#include "include/template_engine.h"
 
@@ -44,7 +43,7 @@ int main(int argc, char *argv[]) {
 
 		// Parse
     printf("running Parser module...\n");
-    // ast_node* ast_root = parse(&token_list);
+    AstNode* ast_root = parse_tokens(&token_list);
     printf("Parsing completed.\n");
 
 		// Generate HTML

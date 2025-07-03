@@ -1,3 +1,5 @@
+#pragma once
+
 #include "list_head.h"
 
 typedef enum {
