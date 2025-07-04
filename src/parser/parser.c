@@ -402,7 +402,24 @@ static AstNode* parse_emphasis(ParserState* p) {
 	return NULL;
 }
 
+static void flush_buffer_if_needed(AstNode* parent_node, char* buffer, int* index_ptr) {
+	if (*index_ptr > 0) {
+		add_child_node(parent_node, create_ast_node(NODE_TEXT, buffer, NULL));
+		*index_ptr = 0;
+		buffer[0] = '\0';
+	}
+}
+
 static void parse_inline_elements(ParserState* p, AstNode* parent_node, bool is_list_item) {
+	int capacity = 256;
+	int index = 0;
+	char* text_buffer = malloc(capacity);
+	if (!text_buffer) {
+		perror("Failed to allocate buffer for inline elements");
+		exit(EXIT_FAILURE);
+	}
+	text_buffer[0] = '\0';
+
 	while(peek_token(p) && peek_token(p)->type != TOKEN_EOF) {
 		Token* t1 = peek_token(p);
 
@@ -432,32 +449,33 @@ static void parse_inline_elements(ParserState* p, AstNode* parent_node, bool is_
 		}
 
 		if (new_node) {
+			flush_buffer_if_needed(parent_node, text_buffer, &index);
 			add_child_node(parent_node, new_node);
 			continue;
 		}
 
 		Token* current_token = consume_token(p);
-		if (type == TOKEN_TEXT)
-			new_node = create_ast_node(NODE_TEXT, current_token->value, NULL);
-		else if (type == TOKEN_NEWLINE)
-			new_node = create_ast_node(NODE_TEXT, " ", NULL);
-		else {
-			if (type == TOKEN_ASTERISK) new_node = create_ast_node(NODE_TEXT, "*", NULL);
-			else if (type == TOKEN_HASH) new_node = create_ast_node(NODE_TEXT, "#", NULL);
-			else if (type == TOKEN_DASH) new_node = create_ast_node(NODE_TEXT, "-", NULL);
-			else if (type == TOKEN_DOT) new_node = create_ast_node(NODE_TEXT, ".", NULL);
-			else if (type == TOKEN_TAB) new_node = create_ast_node(NODE_TEXT, "\t", NULL);
-			else if (type == TOKEN_LBRACKET) new_node = create_ast_node(NODE_TEXT, "[", NULL);
-			else if (type == TOKEN_RBRACKET) new_node = create_ast_node(NODE_TEXT, "]", NULL);
-			else if (type == TOKEN_LPAREN) new_node = create_ast_node(NODE_TEXT, "(", NULL);
-			else if (type == TOKEN_RPAREN) new_node = create_ast_node(NODE_TEXT, ")", NULL);
-			else if (type == TOKEN_BACKTICK) new_node = create_ast_node(NODE_TEXT, "`", NULL);
-			else if (type == TOKEN_EXCLAMATION) new_node = create_ast_node(NODE_TEXT, "!", NULL);
-			else if (type == TOKEN_GREATER_THAN) new_node = create_ast_node(NODE_TEXT, ">", NULL);
-			else if (type == TOKEN_BACKSLASH) new_node = create_ast_node(NODE_TEXT, "\\", NULL);
+		switch (type) {
+			case TOKEN_TEXT: append_string_to_buffer(&text_buffer, &index, &capacity, current_token->value); break;
+			case TOKEN_NEWLINE: append_string_to_buffer(&text_buffer, &index, &capacity, " "); break;
+			case TOKEN_ASTERISK: append_string_to_buffer(&text_buffer, &index, &capacity, "*"); break;
+			case TOKEN_HASH: append_string_to_buffer(&text_buffer, &index, &capacity, "#"); break;
+			case TOKEN_DASH: append_string_to_buffer(&text_buffer, &index, &capacity, "-"); break;
+			case TOKEN_DOT: append_string_to_buffer(&text_buffer, &index, &capacity, "."); break;
+			case TOKEN_TAB: append_string_to_buffer(&text_buffer, &index, &capacity, "\t"); break;
+			case TOKEN_LBRACKET: append_string_to_buffer(&text_buffer, &index, &capacity, "["); break;
+			case TOKEN_RBRACKET: append_string_to_buffer(&text_buffer, &index, &capacity, "]"); break;
+			case TOKEN_LPAREN: append_string_to_buffer(&text_buffer, &index, &capacity, "("); break;
+			case TOKEN_RPAREN: append_string_to_buffer(&text_buffer, &index, &capacity, ")"); break;
+			case TOKEN_BACKTICK: append_string_to_buffer(&text_buffer, &index, &capacity, "`"); break;
+			case TOKEN_EXCLAMATION: append_string_to_buffer(&text_buffer, &index, &capacity, "!"); break;
+			case TOKEN_GREATER_THAN: append_string_to_buffer(&text_buffer, &index, &capacity, ">"); break;
+			case TOKEN_BACKSLASH: append_string_to_buffer(&text_buffer, &index, &capacity, "\\"); break;
+			default: break; 
 		}
-		if (new_node) add_child_node(parent_node, new_node);
 	}
+	flush_buffer_if_needed(parent_node, text_buffer, &index);
+	free(text_buffer);
 }
 
 AstNode* parse_paragraph(ParserState* p) {

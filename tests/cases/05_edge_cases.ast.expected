@@ -1,0 +1,17 @@
+-> DOCUMENT
+	-> HEADING1
+		-> TEXT | data1: "엣지 케이스 테스트"
+	-> PARAGRAPH
+		-> TEXT | data1: "리스트 항목 안에 코드 블럭이 포함된 경우: - 첫 번째 항목 - 두 번째 항목     ```c     // 리스트 항목 안의 코드 블록
+    for (int i = 0; i < 5; i++) {
+        //...
+    }
+    ``` - 세 번째 항목"
+	-> UNORDERED_LIST
+		-> LIST_ITEM
+			-> TEXT | data1: " "
+			-> ITALIC | data1: " "
+	-> PARAGRAPH
+		-> TEXT | data1: "수평선처럼 보이지만, 뒤에 글자가 와서 수평선이 아닌 경우: --- 이것은 수평선이 아닙니다."
+	-> PARAGRAPH
+		-> TEXT | data1: "잘못된 강조 구문: *이탤릭이 **볼드가 닫히지 않았습니다. "

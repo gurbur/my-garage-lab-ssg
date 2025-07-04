@@ -1,0 +1,17 @@
+-> DOCUMENT
+	-> PARAGRAPH
+		-> TEXT | data1: "먼저 언어 타입이 지정된 C 코드 블록입니다."
+	-> CODE_BLOCK | data1: "#include <stdio.h>
+
+// main function
+int main() {
+    printf("Hello, world! *이것은 볼드가 아니다*");
+    return 0;
+}
+" | data2: "c"
+	-> PARAGRAPH
+		-> TEXT | data1: "다음은 언어 타입이 없는 일반 코드 블록입니다."
+	-> CODE_BLOCK | data1: "plain text
+    - with indentation
+# this is not a heading
+"
