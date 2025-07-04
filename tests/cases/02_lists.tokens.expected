@@ -1,0 +1,66 @@
+[DASH]
+[TEXT]{" 순서 없는 리스트 "}
+[NUMBER]{"1"}
+[TEXT]{"번 항목"}
+[NEWLINE]
+[DASH]
+[TEXT]{" "}
+[NUMBER]{"2"}
+[TEXT]{"번 항목"}
+[NEWLINE]
+[TEXT]{"    "}
+[DASH]
+[TEXT]{" 중첩된 "}
+[NUMBER]{"1"}
+[TEXT]{"번 항목"}
+[NEWLINE]
+[TEXT]{"        "}
+[DASH]
+[TEXT]{" 더 깊게 중첩된 항목"}
+[NEWLINE]
+[TEXT]{"    "}
+[DASH]
+[TEXT]{" 중첩된 "}
+[NUMBER]{"2"}
+[TEXT]{"번 항목"}
+[NEWLINE]
+[DASH]
+[TEXT]{" "}
+[NUMBER]{"3"}
+[TEXT]{"번 항목"}
+[NEWLINE]
+[NEWLINE]
+[NUMBER]{"1"}
+[DOT]
+[TEXT]{" 순서있는 리스트 "}
+[NUMBER]{"1"}
+[TEXT]{"번"}
+[NEWLINE]
+[NUMBER]{"2"}
+[DOT]
+[TEXT]{" "}
+[NUMBER]{"2"}
+[TEXT]{"번 항목"}
+[NEWLINE]
+[TEXT]{"    "}
+[NUMBER]{"1"}
+[DOT]
+[TEXT]{" 중첩된 순서 있는 리스트"}
+[NEWLINE]
+[TEXT]{"    "}
+[NUMBER]{"2"}
+[DOT]
+[TEXT]{" 항목 "}
+[NUMBER]{"2"}
+[NEWLINE]
+[TEXT]{"        "}
+[DASH]
+[TEXT]{" 중첩된 순서 없는 리스트"}
+[NEWLINE]
+[NUMBER]{"3"}
+[DOT]
+[TEXT]{" "}
+[NUMBER]{"3"}
+[TEXT]{"번 항목"}
+[NEWLINE]
+[EOF]

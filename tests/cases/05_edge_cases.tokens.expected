@@ -1,0 +1,57 @@
+[HASH]
+[TEXT]{" 엣지 케이스 테스트"}
+[NEWLINE]
+[NEWLINE]
+[TEXT]{"리스트 항목 안에 코드 블럭이 포함된 경우:"}
+[NEWLINE]
+[DASH]
+[TEXT]{" 첫 번째 항목"}
+[NEWLINE]
+[DASH]
+[TEXT]{" 두 번째 항목"}
+[NEWLINE]
+[TEXT]{"    "}
+[BACKTICK]
+[BACKTICK]
+[BACKTICK]
+[TEXT]{"c"}
+[NEWLINE]
+[TEXT]{"    // 리스트 항목 안의 코드 블록
+    for (int i = 0; i < 5; i++) {
+        //...
+    }
+    "}
+[BACKTICK]
+[BACKTICK]
+[BACKTICK]
+[NEWLINE]
+[DASH]
+[TEXT]{" 세 번째 항목"}
+[NEWLINE]
+[NEWLINE]
+[ASTERISK]
+[TEXT]{" "}
+[ASTERISK]
+[TEXT]{" "}
+[ASTERISK]
+[NEWLINE]
+[NEWLINE]
+[TEXT]{"수평선처럼 보이지만, 뒤에 글자가 와서 수평선이 아닌 경우:"}
+[NEWLINE]
+[DASH]
+[DASH]
+[DASH]
+[TEXT]{" 이것은 수평선이 아닙니다"}
+[DOT]
+[NEWLINE]
+[NEWLINE]
+[TEXT]{"잘못된 강조 구문: "}
+[ASTERISK]
+[TEXT]{"이탤릭이"}
+[NEWLINE]
+[ASTERISK]
+[ASTERISK]
+[TEXT]{"볼드가 닫히지 않았습니다"}
+[DOT]
+[NEWLINE]
+[EOF]

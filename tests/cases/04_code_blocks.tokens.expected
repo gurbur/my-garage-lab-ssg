@@ -1,0 +1,39 @@
+[TEXT]{"먼저 언어 타입이 지정된 C 코드 블록입니다"}
+[DOT]
+[NEWLINE]
+[NEWLINE]
+[BACKTICK]
+[BACKTICK]
+[BACKTICK]
+[TEXT]{"c"}
+[NEWLINE]
+[TEXT]{"#include <stdio.h>
+
+// main function
+int main() {
+    printf("Hello, world! *이것은 볼드가 아니다*");
+    return 0;
+}
+"}
+[BACKTICK]
+[BACKTICK]
+[BACKTICK]
+[NEWLINE]
+[NEWLINE]
+[TEXT]{"다음은 언어 타입이 없는 일반 코드 블록입니다"}
+[DOT]
+[NEWLINE]
+[NEWLINE]
+[BACKTICK]
+[BACKTICK]
+[BACKTICK]
+[NEWLINE]
+[TEXT]{"plain text
+    - with indentation
+# this is not a heading
+"}
+[BACKTICK]
+[BACKTICK]
+[BACKTICK]
+[NEWLINE]
+[EOF]

@@ -157,10 +157,11 @@ void tokenize_file(FILE *file, struct list_head *output) {
 				if (isdigit(current_char)) {
 					flush_dynamic_buffer(&text_buffer, &text_buffer_idx, &text_buffer_capacity, output);
 
-					if (!text_buffer) {
+					if (text_buffer) {
 						text_buffer_capacity = 32;
 						text_buffer = malloc(text_buffer_capacity);
 					}
+
 					append_to_buffer(&text_buffer, &text_buffer_idx, &text_buffer_capacity, current_char);
 
 					while (isdigit(fpeek(file))) {
