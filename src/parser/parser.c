@@ -509,10 +509,26 @@ AstNode* parse_block(ParserState* p) {
 			if (node) return node;
 
 			p->current_node = start_pos;
-			return parse_list(p, 0);
+			consume_token(p);
+			Token* next_token = peek_token(p);
+			if (next_token && next_token->type == TOKEN_TEXT && next_token->value[0] == ' ') {
+				p->current_node = start_pos;
+				return parse_list(p, 0);
+			}
+			break;
 		}
-		case TOKEN_NUMBER:
-			return parse_list(p, 0);
+		case TOKEN_NUMBER: {
+			Token* dot_token = peek_token(p);
+			if (dot_token && dot_token->type == TOKEN_DOT) {
+				if (dot_token->list.next != p->head) {
+					Token* space_token = list_entry(dot_token->list.next, Token, list);
+					if (space_token && space_token->type == TOKEN_TEXT && space_token->value[0] == ' ') {
+						return parse_list(p, 0);
+					}
+				}
+			}
+			break;
+		}
 		case TOKEN_BACKTICK: {
 			AstNode* node = parse_code_block(p);
 			if (node) return node;

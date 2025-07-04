@@ -7,15 +7,15 @@
 		-> TEXT | data1: "이렇게 빈 줄을 사이에 두면, 새로운 문단이 시작됩니다."
 	-> HEADING2
 		-> TEXT | data1: "중간 제목 (H2)"
-	-> UNORDERED_LIST
-		-> LIST_ITEM
-			-> TEXT | data1: "이텔릭체*와 "
-			-> BOLD | data1: "볼드체"
-			-> TEXT | data1: ", 그리고 "
-			-> ITALIC_AND_BOLD | data1: "이텔릭과 볼드를 동시에"
-			-> TEXT | data1: " 사용할 수 있습니다. "
-			-> CODE | data1: "인라인 코드"
-			-> TEXT | data1: "도 처리해야 합니다."
+	-> PARAGRAPH
+		-> ITALIC | data1: "이텔릭체"
+		-> TEXT | data1: "와 "
+		-> BOLD | data1: "볼드체"
+		-> TEXT | data1: ", 그리고 "
+		-> ITALIC_AND_BOLD | data1: "이텔릭과 볼드를 동시에"
+		-> TEXT | data1: " 사용할 수 있습니다. "
+		-> CODE | data1: "인라인 코드"
+		-> TEXT | data1: "도 처리해야 합니다."
 	-> LINE
 	-> HEADING3
 		-> TEXT | data1: "작은 제목 (H3)"
