@@ -89,26 +89,56 @@ AstNode* parse_heading(ParserState* p) {
 		consume_token(p);
 	}
 
-	Token* text_token = peek_token(p);
-	if (text_token && text_token->type == TOKEN_TEXT && text_token->value[0] == ' ') {
-		consume_token(p);
-		AstNode* text_node = create_ast_node(NODE_TEXT, text_token->value + 1, NULL);
+	Token* first_text = peek_token(p);
+	if (!first_text || first_text->type != TOKEN_TEXT || first_text->value[0] != ' ') {
+		//printf("hash camed, but heading is not detected\n");
+		//printf("%s\n", first_text->value);
+		return NULL;
+	}
+	
+	int capacity = 256;
+	int index = 0;
+	char* buffer = malloc(capacity);
+	if (!buffer) {
+		perror("Failed to allocate buffer for heading");
+		exit(EXIT_FAILURE);
+	}
+	buffer[0] = '\0';
 
-		AstNodeType heading_type;
-		if (level == 1) heading_type = NODE_HEADING1;
-		else if (level == 2) heading_type = NODE_HEADING2;
-		else heading_type = NODE_HEADING3;
-
-		AstNode* heading_node = create_ast_node(heading_type, NULL, NULL);
-		add_child_node(heading_node, text_node);
-
-		while (peek_token(p) && peek_token(p)->type != TOKEN_NEWLINE) {
-			consume_token(p);
-		}
-		return heading_node;
+	consume_token(p);
+	if (strlen(first_text->value) > 1) {
+		append_string_to_buffer(&buffer, &index, &capacity, first_text->value + 1);
 	}
 
-	return NULL;
+	while (peek_token(p) && peek_token(p)->type != TOKEN_NEWLINE) {
+		Token* current = consume_token(p);
+		if (current->type == TOKEN_TEXT) append_string_to_buffer(&buffer, &index, &capacity, current->value);
+		else if (current->type == TOKEN_LPAREN) append_string_to_buffer(&buffer, &index, &capacity, "(");
+		else if (current->type == TOKEN_RPAREN) append_string_to_buffer(&buffer, &index, &capacity, ")");
+		else if (current->type == TOKEN_NUMBER) append_string_to_buffer(&buffer, &index, &capacity, current->value);
+		else if (current->type == TOKEN_LBRACKET) append_string_to_buffer(&buffer, &index, &capacity, "{");
+		else if (current->type == TOKEN_RBRACKET) append_string_to_buffer(&buffer, &index, &capacity, "}");
+		else if (current->type == TOKEN_ASTERISK) append_string_to_buffer(&buffer, &index, &capacity, "*");
+		else if (current->type == TOKEN_DASH) append_string_to_buffer(&buffer, &index, &capacity, "-");
+		else if (current->type == TOKEN_DOT) append_string_to_buffer(&buffer, &index, &capacity, ".");
+		else if (current->type == TOKEN_EXCLAMATION) append_string_to_buffer(&buffer, &index, &capacity, "!");
+		else if (current->type == TOKEN_HASH) append_string_to_buffer(&buffer, &index, &capacity, "#");
+	}
+
+	AstNodeType heading_type;
+	if (level == 1) heading_type = NODE_HEADING1;
+	else if (level == 2) heading_type = NODE_HEADING2;
+	else heading_type = NODE_HEADING3;
+
+	AstNode* heading_node = create_ast_node(heading_type, NULL, NULL);
+	AstNode* text_node = create_ast_node(NODE_TEXT, buffer, NULL);
+	add_child_node(heading_node, text_node);
+
+	free(buffer);
+
+	match_token(p, TOKEN_NEWLINE);
+
+	return heading_node;
 }
 
 static AstNode* parse_standard_link(ParserState* p) {

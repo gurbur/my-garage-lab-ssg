@@ -1,6 +1,6 @@
 -> DOCUMENT
 	-> HEADING1
-		-> TEXT | data1: "가장 큰 제목 "
+		-> TEXT | data1: "가장 큰 제목 (H1)"
 	-> PARAGRAPH
 		-> TEXT | data1: "This is first paragraph"
 		-> TEXT | data1: "."
@@ -10,7 +10,7 @@
 		-> TEXT | data1: "이렇게 빈 줄을 사이에 두면, 새로운 문단이 시작됩니다"
 		-> TEXT | data1: "."
 	-> HEADING2
-		-> TEXT | data1: "중간 제목 "
+		-> TEXT | data1: "중간 제목 (H2)"
 	-> UNORDERED_LIST
 		-> LIST_ITEM
 			-> TEXT | data1: "이텔릭체"
@@ -27,7 +27,7 @@
 			-> TEXT | data1: "."
 	-> LINE
 	-> HEADING3
-		-> TEXT | data1: "작은 제목 "
+		-> TEXT | data1: "작은 제목 (H3)"
 	-> PARAGRAPH
 		-> TEXT | data1: "수평선 위아래로 다른 내용이 올 수 있습니다"
 		-> TEXT | data1: "."
