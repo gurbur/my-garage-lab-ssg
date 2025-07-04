@@ -1,0 +1,73 @@
+[HASH]
+[TEXT]{" 가장 큰 제목 "}
+[LPAREN]
+[TEXT]{"H"}
+[NUMBER]{"1"}
+[RPAREN]
+[NEWLINE]
+[NEWLINE]
+[TEXT]{"This is first paragraph"}
+[DOT]
+[TEXT]{" 마크다운의 문단은 한 개 이상의 연속된 텍스트 줄로 구성됩니다"}
+[DOT]
+[NEWLINE]
+[NEWLINE]
+[TEXT]{"이렇게 빈 줄을 사이에 두면, 새로운 문단이 시작됩니다"}
+[DOT]
+[NEWLINE]
+[NEWLINE]
+[HASH]
+[HASH]
+[TEXT]{" 중간 제목 "}
+[LPAREN]
+[TEXT]{"H"}
+[NUMBER]{"2"}
+[RPAREN]
+[NEWLINE]
+[NEWLINE]
+[ASTERISK]
+[TEXT]{"이텔릭체"}
+[ASTERISK]
+[TEXT]{"와 "}
+[ASTERISK]
+[ASTERISK]
+[TEXT]{"볼드체"}
+[ASTERISK]
+[ASTERISK]
+[TEXT]{", 그리고 "}
+[ASTERISK]
+[ASTERISK]
+[ASTERISK]
+[TEXT]{"이텔릭과 볼드를 동시에"}
+[ASTERISK]
+[ASTERISK]
+[ASTERISK]
+[TEXT]{" 사용할 수 있습니다"}
+[DOT]
+[TEXT]{" "}
+[BACKTICK]
+[TEXT]{"인라인 코드"}
+[BACKTICK]
+[TEXT]{"도 처리해야 합니다"}
+[DOT]
+[NEWLINE]
+[NEWLINE]
+[DASH]
+[DASH]
+[DASH]
+[NEWLINE]
+[NEWLINE]
+[HASH]
+[HASH]
+[HASH]
+[TEXT]{" 작은 제목 "}
+[LPAREN]
+[TEXT]{"H"}
+[NUMBER]{"3"}
+[RPAREN]
+[NEWLINE]
+[NEWLINE]
+[TEXT]{"수평선 위아래로 다른 내용이 올 수 있습니다"}
+[DOT]
+[NEWLINE]
+[EOF]
