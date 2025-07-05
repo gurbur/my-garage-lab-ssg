@@ -8,50 +8,50 @@ static AstNode* parse_standard_link(ParserState* state);
 static AstNode* parse_obsidian_link(ParserState* state, bool is_image);
 
 void parse_inline_elements(ParserState* state, AstNode* parent_node, bool is_list_item) {
-    int capacity = 256;
-    int index = 0;
-    char* text_buffer = malloc(capacity);
-    text_buffer[0] = '\0';
+	int capacity = 256;
+	int index = 0;
+	char* text_buffer = malloc(capacity);
+	text_buffer[0] = '\0';
 
-    while (peek_token(state) && peek_token(state)->type != TOKEN_EOF) {
-        Token* t1 = peek_token(state);
+	while (peek_token(state) && peek_token(state)->type != TOKEN_EOF) {
+		Token* t1 = peek_token(state);
 
-        if (t1->type == TOKEN_NEWLINE) {
-            if (is_list_item) {
-                break;
-            } else {
-                Token* t2 = (t1->list.next != state->head) ? list_entry(t1->list.next, Token, list) : NULL;
-                if (t2 && t2->type == TOKEN_NEWLINE) {
-                    break;
-                }
-            }
-        }
+		if (t1->type == TOKEN_NEWLINE) {
+			if (is_list_item) {
+				break;
+			} else {
+				Token* t2 = (t1->list.next != state->head) ? list_entry(t1->list.next, Token, list) : NULL;
+				if (t2 && t2->type == TOKEN_NEWLINE) {
+					break;
+				}
+			}
+		}
 
-        AstNode* new_node = NULL;
-        if (t1->type == TOKEN_ASTERISK) new_node = parse_emphasis(state);
-        else if (t1->type == TOKEN_BACKTICK) new_node = parse_inline_code(state);
-        else if (t1->type == TOKEN_EXCLAMATION) new_node = parse_obsidian_link(state, true);
-        else if (t1->type == TOKEN_LBRACKET) {
-            Token* lookahead = (t1->list.next != state->head) ? list_entry(t1->list.next, Token, list) : NULL;
-            if (lookahead && lookahead->type == TOKEN_LBRACKET) new_node = parse_obsidian_link(state, false);
-            else new_node = parse_standard_link(state);
-        }
+		AstNode* new_node = NULL;
+		if (t1->type == TOKEN_ASTERISK) new_node = parse_emphasis(state);
+		else if (t1->type == TOKEN_BACKTICK) new_node = parse_inline_code(state);
+		else if (t1->type == TOKEN_EXCLAMATION) new_node = parse_obsidian_link(state, true);
+		else if (t1->type == TOKEN_LBRACKET) {
+			Token* lookahead = (t1->list.next != state->head) ? list_entry(t1->list.next, Token, list) : NULL;
+			if (lookahead && lookahead->type == TOKEN_LBRACKET) new_node = parse_obsidian_link(state, false);
+			else new_node = parse_standard_link(state);
+		}
 
-        if (new_node) {
-            flush_buffer_if_needed(parent_node, text_buffer, &index);
-            add_child_node(parent_node, new_node);
-            continue;
-        }
+		if (new_node) {
+			flush_buffer_if_needed(parent_node, text_buffer, &index);
+			add_child_node(parent_node, new_node);
+			continue;
+		}
 
-        Token* current_token = consume_token(state);
-        if (current_token->type == TOKEN_NEWLINE) {
-             append_string_to_buffer(&text_buffer, &index, &capacity, " ");
-        } else {
-             append_string_to_buffer(&text_buffer, &index, &capacity, token_to_string(current_token));
-        }
-    }
-    flush_buffer_if_needed(parent_node, text_buffer, &index);
-    free(text_buffer);
+		Token* current_token = consume_token(state);
+		if (current_token->type == TOKEN_NEWLINE) {
+			append_string_to_buffer(&text_buffer, &index, &capacity, " ");
+		} else {
+			append_string_to_buffer(&text_buffer, &index, &capacity, token_to_string(current_token));
+		}
+	}
+	flush_buffer_if_needed(parent_node, text_buffer, &index);
+	free(text_buffer);
 }
 
 static AstNode* parse_emphasis(ParserState* state) {
@@ -85,7 +85,7 @@ static AstNode* parse_emphasis(ParserState* state) {
 static AstNode* parse_inline_code(ParserState* state) {
 	struct list_head* start_pos = state->current_node;
 	if (!peek_token(state) || peek_token(state)->type != TOKEN_BACKTICK) return NULL;
-    consume_token(state);
+	consume_token(state);
 
 	Token* text_token = peek_token(state);
 	if (text_token && text_token->type == TOKEN_TEXT) {
@@ -141,12 +141,12 @@ static AstNode* parse_obsidian_link(ParserState* state, bool is_image) {
 	filename_buffer[0] = '\0';
 	while(peek_token(state)) {
 		Token* t1 = peek_token(state);
-        if (t1->list.next != state->head) {
-		    Token* t2 = list_entry(t1->list.next, Token, list);
-		    if (t1->type == TOKEN_RBRACKET && t2 && t2->type == TOKEN_RBRACKET) break;
-        } else {
-            break;
-        }
+		if (t1->list.next != state->head) {
+			Token* t2 = list_entry(t1->list.next, Token, list);
+			if (t1->type == TOKEN_RBRACKET && t2 && t2->type == TOKEN_RBRACKET) break;
+		} else {
+			break;
+		}
 		Token* current = consume_token(state);
 		append_string_to_buffer(&filename_buffer, &index, &capacity, token_to_string(current));
 	}

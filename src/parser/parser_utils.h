@@ -6,8 +6,8 @@
 #include "../include/parser.h"
 
 typedef struct {
-    struct list_head* current_node;
-    struct list_head* head;
+	struct list_head* current_node;
+	struct list_head* head;
 } ParserState;
 
 AstNode* create_ast_node(AstNodeType type, const char* data1, const char* data2);

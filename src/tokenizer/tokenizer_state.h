@@ -6,15 +6,15 @@
 #include "../include/tokenizer.h"
 
 typedef struct {
-    char* data;
-    int index;
-    int capacity;
+	char* data;
+	int index;
+	int capacity;
 } TextBuffer;
 
 typedef struct {
-    FILE* stream;
-    struct list_head* tokens;
-    TextBuffer text_buffer;
+	FILE* stream;
+	struct list_head* tokens;
+	TextBuffer text_buffer;
 } TokenizerState;
 
 void init_text_buffer(TextBuffer* buffer);
