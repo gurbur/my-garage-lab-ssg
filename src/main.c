@@ -4,7 +4,7 @@
 #include "include/list_head.h"
 #include "include/tokenizer.h"
 #include "include/parser.h"
-//#include "include/html_generator.h"
+#include "include/html_generator.h"
 //#include "include/template_engine.h"
 
 static void free_token_list(struct list_head* head) {
@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
 
 		// Generate HTML
     printf("running HTML Generator module...\n");
-    // generate_html(ast_root, "output.html");
+    generate_html(ast_root, "output.html");
     printf("HTML generation completed.\n");
 
 		// Build complete HTML
