@@ -7,7 +7,8 @@ SRC_DIRS = src/tokenizer src/parser tests/src src
 
 VPATH = $(SRC_DIRS)
 
-LIB_SRCS = token_handlers.c tokenizer.c parser.c
+LIB_SRCS = token_handlers.c tokenizer.c \
+					 parser_utils.c inline_parser.c block_parser.c parser.c
 LIB_OBJS = $(addprefix $(OBJ_DIR)/, $(LIB_SRCS:.c=.o))
 
 MAIN_SRC = main.c
