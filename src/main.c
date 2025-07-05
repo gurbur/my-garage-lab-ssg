@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
 
 		// Generate HTML
     printf("running HTML Generator module...\n");
-    generate_html(ast_root, "output.html");
+    char* content_html = generate_html_from_ast(ast_root);
     printf("HTML generation completed.\n");
 
 		// Build complete HTML

@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 
 	AstNode* ast_root = parse_tokens(&token_list);
 
-	char* html_output = generate_html(ast_root);
+	char* html_output = generate_html_from_ast(ast_root);
 
 	if (html_output) {
 		printf("%s", html_output);
