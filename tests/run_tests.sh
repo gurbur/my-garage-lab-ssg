@@ -38,7 +38,34 @@ for test_file in $CASES_DIR/*.md; do
     fi
 done
 
+echo ""
 
+echo "============================"
+echo "    Running Parser Tests    "
+echo "============================"
+
+for test_file in $CASES_DIR/*.md; do
+    base_name=$(basename "$test_file" .md)
+    expected_file="$CASES_DIR/$base_name.ast.expected"
+    actual_file="$TEMP_DIR/$base_name.ast.actual"
+
+    if [ -f "$expected_file" ]; then
+        total_tests=$((total_tests + 1))
+        printf "Testing %-22s ... " "$base_name.md"
+
+        $PARSER_TEST "$test_file" > "$actual_file"
+
+        if diff -u "$expected_file" "$actual_file" > /dev/null; then
+            printf "${GREEN}PASS${NC}\n"
+            passed_tests=$((passed_tests + 1))
+        else
+            printf "${RED}FAIL${NC}\n"
+            diff -u "$expected_file" "$actual_file"
+        fi
+    fi
+done
+
+echo ""
 
 echo "============================"
 echo "      Test Summary"
