@@ -8,17 +8,19 @@
 [NUMBER]{"2"}
 [TEXT]{"번 항목"}
 [NEWLINE]
-[TEXT]{"    "}
+[TAB]
 [DASH]
 [TEXT]{" 중첩된 "}
 [NUMBER]{"1"}
 [TEXT]{"번 항목"}
 [NEWLINE]
-[TEXT]{"        "}
+[TAB]
+[TAB]
 [DASH]
 [TEXT]{" 더 깊게 중첩된 항목"}
 [NEWLINE]
-[TEXT]{"    "}
+[TAB]
+[TAB]
 [DASH]
 [TEXT]{" 중첩된 "}
 [NUMBER]{"2"}
@@ -42,18 +44,19 @@
 [NUMBER]{"2"}
 [TEXT]{"번 항목"}
 [NEWLINE]
-[TEXT]{"    "}
+[TAB]
 [NUMBER]{"1"}
 [DOT]
 [TEXT]{" 중첩된 순서 있는 리스트"}
 [NEWLINE]
-[TEXT]{"    "}
+[TAB]
 [NUMBER]{"2"}
 [DOT]
 [TEXT]{" 항목 "}
 [NUMBER]{"2"}
 [NEWLINE]
-[TEXT]{"        "}
+[TAB]
+[TAB]
 [DASH]
 [TEXT]{" 중첩된 순서 없는 리스트"}
 [NEWLINE]

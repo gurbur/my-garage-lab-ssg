@@ -1,13 +1,12 @@
 -> DOCUMENT
-	-> HEADING2
-		-> TEXT | data1: "링크 종합 테스트"
+	-> HEADING2 | data1: "링크 종합 테스트"
 	-> PARAGRAPH
 		-> TEXT | data1: "이 문단에는 여러 종류의 링크가 있습니다."
 	-> PARAGRAPH
 		-> TEXT | data1: "표준 마크다운 링크는 이렇게 생겼습니다: "
 		-> LINK | data1: "Google" | data2: "https://google.com"
 		-> TEXT | data1: ". Obsidian 내부 글 링크는 이렇게 생겼습니다: "
-		-> LINK | data1: "1 첫 글" | data2: "1 첫 글"
+		-> LINK | data1: "(1) 첫 글" | data2: "(1) 첫 글"
 		-> TEXT | data1: ". 마지막으로, Obsidian 이미지 링크는 이렇게 생겼습니다:"
 	-> PARAGRAPH
 		-> IMAGE_LINK | data1: "image_preview.png"
