@@ -112,8 +112,8 @@ typedef struct {
 <p>Lookahead... 엿보기?? 이게 정녕 맞는 번역인가(동공지진</p>
 <p>예측 파싱 방식은, <strong>다음에 어떤 문법 요소가 올지 미리 엿보고(lookahead), 그에 맞는 규칙을  적용하는</strong> 파싱 방식입니다.</p>
 <p>특별히, "앞의 몇 개의 토큰을 엿보는가?"를 기준으로, 한 개를 엿보면 'LL(1) Parser' 등으로 불러요.</p>
-<p>우리 parser에서는, <code>ParserState</code>라는 상태 구조체를 기반으로, 현재 보고 있는 <code>current_head</code>를 참조하도록 하여 `peek_token()`함수로 lookahead를 수행합니다.</p>
-<p>쉽게 말해서, 다음 토큰이 만약 `#<code>라면, </code>HEADING<code>타입일 가능성이 높으니, 이를 기반으로 </code>parse_heading()`이라는 heading 처리 함수로 보내보는 거에요.</p>
+<p>우리 parser에서는, <code>ParserState</code>라는 상태 구조체를 기반으로, 현재 보고 있는 <code>current_head</code>를 참조하도록 하여 <code>peek_token()</code>함수로 lookahead를 수행합니다.</p>
+<p>쉽게 말해서, 다음 토큰이 만약 <code>#</code>라면, <code>HEADING</code>타입일 가능성이 높으니, 이를 기반으로 <code>parse_heading()</code>이라는 heading 처리 함수로 보내보는 거에요.</p>
 <p>뭔가 당연해보이는데 굳이 왜 이름이 붙었나??</p>
 <p>제가 수업을 들을 때에는 다른 더 특이한 컴파일러 구조와 구분하여 부르기 위해, 이런 이름을 붙힌 걸로 이해했습니다.(...)</p>
 <p>아무튼 이런 식으로, 타입을 예측하여 일단 수행을 해보고, 아니라면 아래의 개념을 수행해요.</p>
@@ -124,7 +124,7 @@ typedef struct {
 <p>구현을 많이 단순하게 만들어주거든요.</p>
 <p>초기 토큰만 맞으면 일단 시도해보고, 만약 아니면 백트래킹을 일으켜, 처음으로 돌려서 다른방식으로 시도하도록 해서, 별다른 복잡한 생각 없이 만들어도 잘 버그를 일으키지 않는, 견고한 구조를 갖도록 도와줍니다.</p>
 <p>우리 parser에서는 이 기법을 굉장히 많이 이용했는데요,</p>
-<p>예시로 markdown문법의 `-<code>의 경우, </code>---<code>의 LINE으로 해석될 여지도 있고, </code>- list`와 같은 UNORDERED LIST로 해석될 여지도 있어요.</p>
+<p>예시로 markdown문법의 <code>-</code>의 경우, <code>---</code>의 LINE으로 해석될 여지도 있고, <code>- list</code>와 같은 UNORDERED LIST로 해석될 여지도 있어요.</p>
 <p>그래서 일단은 LINE으로 보내서, 만약 다음 토큰도 Dash가 아니라면 백트래킹을 일으키는 이런 방식을 많이 적용했습니다.</p>
 <h2>코드 구조?</h2>
 <p>토큰 리스트가 들어오면, 파서는 아래의 큰 흐름을 따릅니다:</p>
@@ -140,7 +140,7 @@ typedef struct {
 <p>그리고 문제는, 이 코드들을 모두 한 파일(...)에 작성했었다는 점이었죠.</p>
 <p>이런 크고 아름다운(...) monolitic 구조는, 컴파일이나 실행 시에 효율은 조금 올라갈지 몰라도, 읽기도 어렵고, 수정하기엔 더더욱 어렵더군요.</p>
 <p>그래서 리펙토링을 통해, 전체 코드들을 4개의 sub-module형태로 쪼갰습니다.</p>
-<p>메모리 관리와 토큰, 노드 등을 관리하는 `parser_utils.c/h<code>, 실제 진입점이 되는 함수가 있는 </code>parser.c<code>, 블럭을 파싱하는 </code>block_parser.c/h<code>, 인라인을 파싱하는 </code>inline_parser.c/h`로 구성했어요.</p>
+<p>메모리 관리와 토큰, 노드 등을 관리하는 <code>parser_utils.c/h</code>, 실제 진입점이 되는 함수가 있는 <code>parser.c</code>, 블럭을 파싱하는 <code>block_parser.c/h</code>, 인라인을 파싱하는 <code>inline_parser.c/h</code>로 구성했어요.</p>
 <p>이를 통해, 유지보수하기도 쉬운 parser 개발, 끝!! 야호</p>
 <p>이제 다음은 html_generator...인데, 사실 이미 코드작업을 마쳐버려서(글 작성 날짜가 꽤나 밀림. 어느새 7월 6일...ㅎㅎ), 해당 내용도 그음방 정리해서 다시 들고올게요.</p>
 <p>안녕ㅇㅇㄴㅇㅇㄴㅇㄴㄴㅇ</p>

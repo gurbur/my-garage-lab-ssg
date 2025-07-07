@@ -112,17 +112,38 @@ static AstNode* parse_emphasis(ParserState* state) {
 
 static AstNode* parse_inline_code(ParserState* state) {
 	struct list_head* start_pos = state->current_node;
-	if (!peek_token(state) || peek_token(state)->type != TOKEN_BACKTICK) return NULL;
-	consume_token(state);
 
-	Token* text_token = peek_token(state);
-	if (text_token && text_token->type == TOKEN_TEXT) {
-		consume_token(state);
-		if (peek_token(state) && peek_token(state)->type == TOKEN_BACKTICK) {
-			consume_token(state);
-			return create_ast_node(NODE_CODE, text_token->value, NULL);
-		}
+	if (!match_token(state, TOKEN_BACKTICK)) return NULL;
+
+	int capacity = 64;
+	int index = 0;
+	char* content_buffer = malloc(capacity);
+
+	if (!content_buffer) {
+		perror("Failed to allocate buffer for inline code");
+		exit(EXIT_FAILURE);
 	}
+	content_buffer[0] = '\0';
+
+	while (peek_token(state)) {
+		Token* current = peek_token(state);
+
+		if (current->type == TOKEN_BACKTICK) {
+			consume_token(state);
+			AstNode* node = create_ast_node(NODE_CODE, content_buffer, NULL);
+			free(content_buffer);
+			return node;
+		}
+
+		if (current->type == TOKEN_NEWLINE || current->type == TOKEN_EOF) {
+			break;
+		}
+
+		Token* token_to_add = consume_token(state);
+		append_string_to_buffer(&content_buffer, &index, &capacity, token_to_string(token_to_add));
+	}
+
+	free(content_buffer);
 	state->current_node = start_pos;
 	return NULL;
 }

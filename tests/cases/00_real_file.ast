@@ -169,13 +169,17 @@ typedef struct {
 		-> CODE | data1: "ParserState"
 		-> TEXT | data1: "라는 상태 구조체를 기반으로, 현재 보고 있는 "
 		-> CODE | data1: "current_head"
-		-> TEXT | data1: "를 참조하도록 하여 `peek_token()`함수로 lookahead를 수행합니다."
+		-> TEXT | data1: "를 참조하도록 하여 "
+		-> CODE | data1: "peek_token()"
+		-> TEXT | data1: "함수로 lookahead를 수행합니다."
 	-> PARAGRAPH
-		-> TEXT | data1: "쉽게 말해서, 다음 토큰이 만약 `#"
-		-> CODE | data1: "라면, "
-		-> TEXT | data1: "HEADING"
-		-> CODE | data1: "타입일 가능성이 높으니, 이를 기반으로 "
-		-> TEXT | data1: "parse_heading()`이라는 heading 처리 함수로 보내보는 거에요."
+		-> TEXT | data1: "쉽게 말해서, 다음 토큰이 만약 "
+		-> CODE | data1: "#"
+		-> TEXT | data1: "라면, "
+		-> CODE | data1: "HEADING"
+		-> TEXT | data1: "타입일 가능성이 높으니, 이를 기반으로 "
+		-> CODE | data1: "parse_heading()"
+		-> TEXT | data1: "이라는 heading 처리 함수로 보내보는 거에요."
 	-> PARAGRAPH
 		-> TEXT | data1: "뭔가 당연해보이는데 굳이 왜 이름이 붙었나??"
 	-> PARAGRAPH
@@ -198,11 +202,13 @@ typedef struct {
 	-> PARAGRAPH
 		-> TEXT | data1: "우리 parser에서는 이 기법을 굉장히 많이 이용했는데요,"
 	-> PARAGRAPH
-		-> TEXT | data1: "예시로 markdown문법의 `-"
-		-> CODE | data1: "의 경우, "
-		-> TEXT | data1: "---"
-		-> CODE | data1: "의 LINE으로 해석될 여지도 있고, "
-		-> TEXT | data1: "- list`와 같은 UNORDERED LIST로 해석될 여지도 있어요."
+		-> TEXT | data1: "예시로 markdown문법의 "
+		-> CODE | data1: "-"
+		-> TEXT | data1: "의 경우, "
+		-> CODE | data1: "---"
+		-> TEXT | data1: "의 LINE으로 해석될 여지도 있고, "
+		-> CODE | data1: "- list"
+		-> TEXT | data1: "와 같은 UNORDERED LIST로 해석될 여지도 있어요."
 	-> PARAGRAPH
 		-> TEXT | data1: "그래서 일단은 LINE으로 보내서, 만약 다음 토큰도 Dash가 아니라면 백트래킹을 일으키는 이런 방식을 많이 적용했습니다."
 	-> HEADING2 | data1: "코드 구조?"
@@ -233,13 +239,15 @@ typedef struct {
 	-> PARAGRAPH
 		-> TEXT | data1: "그래서 리펙토링을 통해, 전체 코드들을 4개의 sub-module형태로 쪼갰습니다."
 	-> PARAGRAPH
-		-> TEXT | data1: "메모리 관리와 토큰, 노드 등을 관리하는 `parser_utils.c/h"
-		-> CODE | data1: ", 실제 진입점이 되는 함수가 있는 "
-		-> TEXT | data1: "parser.c"
-		-> CODE | data1: ", 블럭을 파싱하는 "
-		-> TEXT | data1: "block_parser.c/h"
-		-> CODE | data1: ", 인라인을 파싱하는 "
-		-> TEXT | data1: "inline_parser.c/h`로 구성했어요."
+		-> TEXT | data1: "메모리 관리와 토큰, 노드 등을 관리하는 "
+		-> CODE | data1: "parser_utils.c/h"
+		-> TEXT | data1: ", 실제 진입점이 되는 함수가 있는 "
+		-> CODE | data1: "parser.c"
+		-> TEXT | data1: ", 블럭을 파싱하는 "
+		-> CODE | data1: "block_parser.c/h"
+		-> TEXT | data1: ", 인라인을 파싱하는 "
+		-> CODE | data1: "inline_parser.c/h"
+		-> TEXT | data1: "로 구성했어요."
 	-> PARAGRAPH
 		-> TEXT | data1: "이를 통해, 유지보수하기도 쉬운 parser 개발, 끝!! 야호"
 	-> PARAGRAPH
