@@ -57,6 +57,7 @@ void parse_inline_elements(ParserState* state, AstNode* parent_node, bool is_lis
 static AstNode* parse_emphasis(ParserState* state) {
 	struct list_head* start_pos = state->current_node;
 	int level = 0;
+
 	while (peek_token(state) && peek_token(state)->type == TOKEN_ASTERISK) {
 		level++;
 		consume_token(state);
@@ -65,19 +66,46 @@ static AstNode* parse_emphasis(ParserState* state) {
 		state->current_node = start_pos;
 		return NULL;
 	}
-	Token* text_token = peek_token(state);
-	if (text_token && text_token->type == TOKEN_TEXT) {
-		consume_token(state);
-		int closing_level = 0;
-		while(peek_token(state) && peek_token(state)->type == TOKEN_ASTERISK) {
-			closing_level++;
-			consume_token(state);
-		}
-		if (level == closing_level) {
-			AstNodeType type = (level == 1) ? NODE_ITALIC : (level == 2) ? NODE_BOLD : NODE_ITALIC_AND_BOLD;
-			return create_ast_node(type, text_token->value, NULL);
-		}
+
+	int capacity = 256;
+	int index = 0;
+	char* content_buffer = malloc(capacity);
+	if (!content_buffer) {
+		perror("Failed to allocate buffer for emphasis");
+		exit(EXIT_FAILURE);
 	}
+	content_buffer[0] = '\0';
+
+	while (peek_token(state)) {
+		Token* current = peek_token(state);
+
+		if (current->type == TOKEN_ASTERISK) {
+			int closing_level = 0;
+			struct list_head* temp_pos = state->current_node;
+
+			while(peek_token(state) && peek_token(state)->type == TOKEN_ASTERISK) {
+				closing_level++;
+				consume_token(state);
+			}
+
+			if (level == closing_level) {
+				AstNodeType type = (level == 1) ? NODE_ITALIC : (level == 2) ? NODE_BOLD : NODE_ITALIC_AND_BOLD;
+				AstNode* node = create_ast_node(type, content_buffer, NULL);
+				free(content_buffer);
+				return node;
+			}
+
+			state->current_node = temp_pos;
+		}
+
+		Token* token_to_add = consume_token(state);
+		if (!token_to_add || token_to_add->type == TOKEN_NEWLINE || token_to_add->type == TOKEN_EOF) {
+			break;
+		}
+		append_string_to_buffer(&content_buffer, &index, &capacity, token_to_string(token_to_add));
+	}
+
+	free(content_buffer);
 	state->current_node = start_pos;
 	return NULL;
 }
