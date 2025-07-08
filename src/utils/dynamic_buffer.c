@@ -4,12 +4,6 @@
 #include <stdarg.h>
 #include "../include/dynamic_buffer.h"
 
-struct DynamicBuffer {
-	char* content;
-	size_t length;
-	size_t capacity;
-};
-
 DynamicBuffer* create_dynamic_buffer(size_t initial_capacity) {
 	DynamicBuffer* buffer = malloc(sizeof(DynamicBuffer));
 	if (!buffer) return NULL;

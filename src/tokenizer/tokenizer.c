@@ -18,7 +18,11 @@ void tokenize_file(FILE* file, struct list_head* output) {
 	TokenizerState state;
 	state.stream = file;
 	state.tokens = output;
-	init_text_buffer(&state.text_buffer);
+	state.text_buffer = create_dynamic_buffer(256);
+	if (!state.text_buffer) {
+		perror("Failed to create dynamic buffer");
+		exit(EXIT_FAILURE);
+	}
 
 	char current_char;
 	while ((current_char = fgetc(state.stream)) != EOF) {
@@ -29,12 +33,12 @@ void tokenize_file(FILE* file, struct list_head* output) {
 				if (next2 == '`') {
 					handle_fenced_code_block(&state);
 				} else {
-					ungetc(next2, state.stream);
-					ungetc(next1, state.stream);
+					if(next2 != EOF) ungetc(next2, state.stream);
+					if(next1 != EOF) ungetc(next1, state.stream);
 					handle_punctuation(&state, current_char);
 				}
 			} else {
-				ungetc(next1, state.stream);
+				if(next1 != EOF) ungetc(next1, state.stream);
 				handle_punctuation(&state, current_char);
 			}
 		} else if (is_punctuation(current_char)) {
@@ -42,12 +46,13 @@ void tokenize_file(FILE* file, struct list_head* output) {
 		} else if (isdigit(current_char)) {
 			handle_number(&state, current_char);
 		} else {
-			append_char_to_buffer(&state.text_buffer, current_char);
+			append_char_to_buffer(state.text_buffer, current_char);
 		}
 	}
 
-	flush_buffer_as_token(&state.text_buffer, TOKEN_TEXT, state.tokens);
-	free(state.text_buffer.data);
+	flush_buffer_as_token(state.text_buffer, TOKEN_TEXT, state.tokens);
+	char* final_content = destroy_buffer_and_get_content(state.text_buffer);
+	free(final_content);
 	
 	add_token(TOKEN_EOF, NULL, state.tokens);
 }
