@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "inline_parser.h"
+#include "../include/dynamic_buffer.h"
 
 static AstNode* parse_emphasis(ParserState* state);
 static AstNode* parse_inline_code(ParserState* state);
@@ -8,10 +9,7 @@ static AstNode* parse_standard_link(ParserState* state);
 static AstNode* parse_obsidian_link(ParserState* state, bool is_image);
 
 void parse_inline_elements(ParserState* state, AstNode* parent_node, bool is_list_item) {
-	int capacity = 256;
-	int index = 0;
-	char* text_buffer = malloc(capacity);
-	text_buffer[0] = '\0';
+	DynamicBuffer* text_buffer = create_dynamic_buffer(256);
 
 	while (peek_token(state) && peek_token(state)->type != TOKEN_EOF) {
 		Token* t1 = peek_token(state);
@@ -38,20 +36,27 @@ void parse_inline_elements(ParserState* state, AstNode* parent_node, bool is_lis
 		}
 
 		if (new_node) {
-			flush_buffer_if_needed(parent_node, text_buffer, &index);
+			if (text_buffer->length > 0) {
+				add_child_node(parent_node, create_ast_node(NODE_TEXT, text_buffer->content, NULL));
+				text_buffer->length = 0;
+				text_buffer->content[0] = '\0';
+			}
 			add_child_node(parent_node, new_node);
 			continue;
 		}
 
 		Token* current_token = consume_token(state);
 		if (current_token->type == TOKEN_NEWLINE) {
-			append_string_to_buffer(&text_buffer, &index, &capacity, " ");
+			buffer_append_formatted(text_buffer, " ");
 		} else {
-			append_string_to_buffer(&text_buffer, &index, &capacity, token_to_string(current_token));
+			buffer_append_formatted(text_buffer, "%s", token_to_string(current_token));
 		}
 	}
-	flush_buffer_if_needed(parent_node, text_buffer, &index);
-	free(text_buffer);
+	if (text_buffer->length > 0) {
+		add_child_node(parent_node, create_ast_node(NODE_TEXT, text_buffer->content, NULL));
+	}
+	char* final_content = destroy_buffer_and_get_content(text_buffer);
+	free(final_content);
 }
 
 static AstNode* parse_emphasis(ParserState* state) {
@@ -67,14 +72,7 @@ static AstNode* parse_emphasis(ParserState* state) {
 		return NULL;
 	}
 
-	int capacity = 256;
-	int index = 0;
-	char* content_buffer = malloc(capacity);
-	if (!content_buffer) {
-		perror("Failed to allocate buffer for emphasis");
-		exit(EXIT_FAILURE);
-	}
-	content_buffer[0] = '\0';
+	DynamicBuffer* temp_buffer = create_dynamic_buffer(64);
 
 	while (peek_token(state)) {
 		Token* current = peek_token(state);
@@ -90,22 +88,24 @@ static AstNode* parse_emphasis(ParserState* state) {
 
 			if (level == closing_level) {
 				AstNodeType type = (level == 1) ? NODE_ITALIC : (level == 2) ? NODE_BOLD : NODE_ITALIC_AND_BOLD;
-				AstNode* node = create_ast_node(type, content_buffer, NULL);
-				free(content_buffer);
+				AstNode* node = create_ast_node(type, temp_buffer->content, NULL);
+				char* temp_content = destroy_buffer_and_get_content(temp_buffer);
+				free(temp_content);
 				return node;
 			}
 
 			state->current_node = temp_pos;
 		}
-
 		Token* token_to_add = consume_token(state);
 		if (!token_to_add || token_to_add->type == TOKEN_NEWLINE || token_to_add->type == TOKEN_EOF) {
 			break;
 		}
-		append_string_to_buffer(&content_buffer, &index, &capacity, token_to_string(token_to_add));
+		buffer_append_formatted(temp_buffer, "%s", token_to_string(token_to_add));
+
 	}
 
-	free(content_buffer);
+	char* temp_content = destroy_buffer_and_get_content(temp_buffer);
+	free(temp_content);
 	state->current_node = start_pos;
 	return NULL;
 }
@@ -115,23 +115,16 @@ static AstNode* parse_inline_code(ParserState* state) {
 
 	if (!match_token(state, TOKEN_BACKTICK)) return NULL;
 
-	int capacity = 64;
-	int index = 0;
-	char* content_buffer = malloc(capacity);
-
-	if (!content_buffer) {
-		perror("Failed to allocate buffer for inline code");
-		exit(EXIT_FAILURE);
-	}
-	content_buffer[0] = '\0';
+	DynamicBuffer* temp_buffer = create_dynamic_buffer(64);
 
 	while (peek_token(state)) {
 		Token* current = peek_token(state);
 
 		if (current->type == TOKEN_BACKTICK) {
 			consume_token(state);
-			AstNode* node = create_ast_node(NODE_CODE, content_buffer, NULL);
-			free(content_buffer);
+			AstNode* node = create_ast_node(NODE_CODE, temp_buffer->content, NULL);
+			char* temp_content = destroy_buffer_and_get_content(temp_buffer);
+			free(temp_content);
 			return node;
 		}
 
@@ -140,10 +133,11 @@ static AstNode* parse_inline_code(ParserState* state) {
 		}
 
 		Token* token_to_add = consume_token(state);
-		append_string_to_buffer(&content_buffer, &index, &capacity, token_to_string(token_to_add));
+		buffer_append_formatted(temp_buffer, "%s", token_to_string(token_to_add));
 	}
 
-	free(content_buffer);
+	char* temp_content = destroy_buffer_and_get_content(temp_buffer);
+	free(temp_content);
 	state->current_node = start_pos;
 	return NULL;
 }
@@ -156,20 +150,21 @@ static AstNode* parse_standard_link(ParserState* state) {
 	if (text_token && text_token->type == TOKEN_TEXT) {
 		consume_token(state);
 		if (match_token(state, TOKEN_RBRACKET) && match_token(state, TOKEN_LPAREN)) {
-			int capacity = 256;
-			int index = 0;
-			char* url_buffer = malloc(capacity);
-			url_buffer[0] = '\0';
+			DynamicBuffer* url_buffer = create_dynamic_buffer(256);
+
 			while(peek_token(state) && peek_token(state)->type != TOKEN_RPAREN) {
 				Token* current = consume_token(state);
-				append_string_to_buffer(&url_buffer, &index, &capacity, token_to_string(current));
+				buffer_append_formatted(url_buffer, "%s", token_to_string(current));
 			}
+
 			if (match_token(state, TOKEN_RPAREN)) {
-				AstNode* link_node = create_ast_node(NODE_LINK, text_token->value, url_buffer);
-				free(url_buffer);
+				AstNode* link_node = create_ast_node(NODE_LINK, text_token->value, url_buffer->content);
+				char* temp_content = destroy_buffer_and_get_content(url_buffer);
+				free(temp_content);
 				return link_node;
 			}
-			free(url_buffer);
+			char* temp_content = destroy_buffer_and_get_content(url_buffer);
+			free(temp_content);
 		}
 	}
 	state->current_node = start_pos;
@@ -184,10 +179,8 @@ static AstNode* parse_obsidian_link(ParserState* state, bool is_image) {
 	if (!match_token(state, TOKEN_LBRACKET)) { state->current_node = start_pos; return NULL; }
 	if (!match_token(state, TOKEN_LBRACKET)) { state->current_node = start_pos; return NULL; }
 
-	int capacity = 256;
-	int index = 0;
-	char* filename_buffer = malloc(capacity);
-	filename_buffer[0] = '\0';
+	DynamicBuffer* filename_buffer = create_dynamic_buffer(256);
+
 	while(peek_token(state)) {
 		Token* t1 = peek_token(state);
 		if (t1->list.next != state->head) {
@@ -197,15 +190,17 @@ static AstNode* parse_obsidian_link(ParserState* state, bool is_image) {
 			break;
 		}
 		Token* current = consume_token(state);
-		append_string_to_buffer(&filename_buffer, &index, &capacity, token_to_string(current));
+		buffer_append_formatted(filename_buffer, "%s", token_to_string(current));
 	}
 
 	if (match_token(state, TOKEN_RBRACKET) && match_token(state, TOKEN_RBRACKET)) {
-		AstNode* link_node = create_ast_node(is_image ? NODE_IMAGE_LINK : NODE_LINK, filename_buffer, is_image ? NULL : filename_buffer);
-		free(filename_buffer);
+		AstNode* link_node = create_ast_node(is_image ? NODE_IMAGE_LINK : NODE_LINK, filename_buffer->content, is_image ? NULL : filename_buffer->content);
+		char* temp_content = destroy_buffer_and_get_content(filename_buffer);
+		free(temp_content);
 		return link_node;
 	}
-	free(filename_buffer);
+	char* temp_content = destroy_buffer_and_get_content(filename_buffer);
+	free(temp_content);
 	state->current_node = start_pos;
 	return NULL;
 }

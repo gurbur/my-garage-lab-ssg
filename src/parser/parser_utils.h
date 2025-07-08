@@ -20,7 +20,5 @@ int calculate_indent(ParserState* state);
 void consume_indent(ParserState* state);
 
 const char* token_to_string(const Token* token);
-void append_string_to_buffer(char** buffer, int* index, int* capacity, const char* str);
-void flush_buffer_if_needed(AstNode* parent_node, char* buffer, int* index_ptr);
 
 #endif

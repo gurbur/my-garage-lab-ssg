@@ -78,28 +78,3 @@ const char* token_to_string(const Token* token) {
 	}
 }
 
-void append_string_to_buffer(char** buffer, int* index, int* capacity, const char* str) {
-	if (!str) return;
-	size_t str_len = strlen(str);
-	while (*index + str_len >= (size_t)*capacity) {
-		*capacity *= 2;
-		char* new_buffer = realloc(*buffer, *capacity);
-		if (!new_buffer) {
-			perror("Failed to reallocate buffer");
-			free(*buffer);
-			exit(EXIT_FAILURE);
-		}
-		*buffer = new_buffer;
-	}
-	strcat(*buffer, str);
-	*index += str_len;
-}
-
-void flush_buffer_if_needed(AstNode* parent_node, char* buffer, int* index_ptr) {
-	if (*index_ptr > 0) {
-		buffer[*index_ptr] = '\0';
-		add_child_node(parent_node, create_ast_node(NODE_TEXT, buffer, NULL));
-		*index_ptr = 0;
-		buffer[0] = '\0';
-	}
-}

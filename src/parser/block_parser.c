@@ -4,6 +4,8 @@
 
 #include "block_parser.h"
 #include "inline_parser.h"
+#include "parser_utils.h"
+#include "../include/dynamic_buffer.h"
 
 static AstNode* parse_paragraph(ParserState* state);
 static AstNode* parse_heading(ParserState* state);
@@ -148,22 +150,23 @@ static AstNode* parse_heading(ParserState* state) {
 		return NULL;
 	}
 
-	int capacity = 256;
-	int index = 0;
-	char* buffer = malloc(capacity);
-	buffer[0] = '\0';
+	DynamicBuffer* buffer = create_dynamic_buffer(256);
+
 	consume_token(state);
 	if (strlen(first_text->value) > 1) {
-		append_string_to_buffer(&buffer, &index, &capacity, first_text->value + 1);
+		buffer_append_formatted(buffer, "%s", first_text->value + 1);
 	}
 	while (peek_token(state) && peek_token(state)->type != TOKEN_NEWLINE) {
 		Token* current = consume_token(state);
-		append_string_to_buffer(&buffer, &index, &capacity, token_to_string(current));
+		buffer_append_formatted(buffer, "%s", token_to_string(current));
 	}
 
 	AstNodeType heading_type = (level == 1) ? NODE_HEADING1 : (level == 2) ? NODE_HEADING2 : NODE_HEADING3;
-	AstNode* heading_node = create_ast_node(heading_type, buffer, NULL);
-	free(buffer);
+
+	char* content_to_give = destroy_buffer_and_get_content(buffer);
+
+	AstNode* heading_node = create_ast_node(heading_type, content_to_give, NULL);
+
 	return heading_node;
 }
 
