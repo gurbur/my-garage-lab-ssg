@@ -1,0 +1,32 @@
+<div style="display: flex;">
+	{{ component:sidebar }}
+	<main>
+		<div class="post-outer-frame">
+			<div class="title">
+				<h2>{{ breadcrumb }}</h2>
+			</div>
+			<div class="post-inner-frame">
+				<div class="title">
+					<h2>{{ title }}</h2>
+				</div>
+				<div class="post-metadata">
+					<p>작성자: {{ writer }}</p>
+					<p>작성일자: {{ date }}</p>
+				</div>
+				<div class="post-main">
+					<div class="post-index">
+						<h2>목자</h2>
+						{{ table_of_contents }}
+					</div>
+					<div class="post-main-content">
+						{{ post_content }}
+					</div>
+					<div class="back-and-forth">
+						<a href="{{ prev_post_link }}">이전 글</a>
+						<a href="{{ next_post_link }}">다음 글</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</main>
+</div>
