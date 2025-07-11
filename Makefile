@@ -4,13 +4,15 @@ CFLAGS = -g -Wall -Isrc/include -Isrc/html_generator
 BUILD_DIR = builds
 OBJ_DIR = $(BUILD_DIR)/obj
 
-SRC_DIRS = src/tokenizer src/parser src/html_generator src/utils tests/src
+SRC_DIRS = src/tokenizer src/parser src/html_generator src/template_engine src/utils tests/src
 VPATH = $(SRC_DIRS)
 
 LIB_SRCS = dynamic_buffer.c \
 					 token_handlers.c tokenizer.c \
 					 parser_utils.c inline_parser.c block_parser.c parser.c \
-					 html_generator.c node_renderer.c
+					 html_generator.c node_renderer.c \
+					 template_engine.c
+
 LIB_OBJS = $(addprefix $(OBJ_DIR)/, $(LIB_SRCS:.c=.o))
 
 MAIN_SRC = main.c

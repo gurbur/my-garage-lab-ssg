@@ -9,6 +9,7 @@ TEMP_DIR=$(mktemp -d)
 TOKENIZER_TEST="$BUILD_DIR/test_tokenizer"
 PARSER_TEST="$BUILD_DIR/test_parser"
 HTML_GENERATOR_TEST="$BUILD_DIR/test_html_generator"
+TEMPLATE_ENGINE_TEST="$BUILD_DIR/test_template_engine"
 
 total_tests=0
 passed_tests=0
@@ -47,9 +48,10 @@ run_test_suite() {
     echo ""
 }
 
-run_test_suite "Tokenizer"      "$TOKENIZER_TEST"       "tokens.expected" "tokens.actual"
-run_test_suite "Parser"         "$PARSER_TEST"          "ast.expected"    "ast.actual"
-run_test_suite "HTML Generator" "$HTML_GENERATOR_TEST"  "html.expected"   "html.actual"
+run_test_suite "Tokenizer"       "$TOKENIZER_TEST"       "tokens.expected"     "tokens.actual"
+run_test_suite "Parser"          "$PARSER_TEST"          "ast.expected"        "ast.actual"
+run_test_suite "HTML Generator"  "$HTML_GENERATOR_TEST"  "html.expected"       "html.actual"
+run_test_suite "Template Engine" "$TEMPLATE_ENGINE_TEST" "final.html" "final.actual"
 
 
 echo "========================================="
