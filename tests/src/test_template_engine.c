@@ -5,7 +5,7 @@
 #include "../../src/include/tokenizer.h"
 #include "../../src/include/parser.h"
 #include "../../src/include/html_generator.h"
-#include "../../src/include/templete_engine.h"
+#include "../../src/include/template_engine.h"
 
 static void free_token_list(struct list_head* head) {
 	Token *current_token, *temp;

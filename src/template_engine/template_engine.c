@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../include/templete_engine.h"
+#include "../include/template_engine.h"
 #include "../include/dynamic_buffer.h"
 
 typedef struct {
