@@ -80,6 +80,16 @@ void free_template_context(TemplateContext* context) {
 	free(context);
 }
 
+const char* get_from_context(TemplateContext* context, const char* key) {
+	TemplateData *pos;
+	list_for_each_entry(pos, context, list) {
+		if (strcmp(pos->key, key) == 0) {
+			return pos->value;
+		}
+	}
+	return NULL;
+}
+
 static char* create_component_path(const char* placeholder_start) {
 	const char* start = placeholder_start + strlen("{{ component:");
 	while (*start == ' ') start++;
