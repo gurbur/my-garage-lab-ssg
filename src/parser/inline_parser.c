@@ -146,27 +146,38 @@ static AstNode* parse_standard_link(ParserState* state) {
 	struct list_head* start_pos = state->current_node;
 	if (!match_token(state, TOKEN_LBRACKET)) return NULL;
 
-	Token* text_token = peek_token(state);
-	if (text_token && text_token->type == TOKEN_TEXT) {
-		consume_token(state);
-		if (match_token(state, TOKEN_RBRACKET) && match_token(state, TOKEN_LPAREN)) {
-			DynamicBuffer* url_buffer = create_dynamic_buffer(256);
+	DynamicBuffer* text_buffer = create_dynamic_buffer(128);
 
-			while(peek_token(state) && peek_token(state)->type != TOKEN_RPAREN) {
-				Token* current = consume_token(state);
-				buffer_append_formatted(url_buffer, "%s", token_to_string(current));
-			}
-
-			if (match_token(state, TOKEN_RPAREN)) {
-				AstNode* link_node = create_ast_node(NODE_LINK, text_token->value, url_buffer->content);
-				char* temp_content = destroy_buffer_and_get_content(url_buffer);
-				free(temp_content);
-				return link_node;
-			}
-			char* temp_content = destroy_buffer_and_get_content(url_buffer);
-			free(temp_content);
+	while (peek_token(state) && peek_token(state)->type != TOKEN_RBRACKET) {
+		Token* current = consume_token(state);
+		if (current->type == TOKEN_NEWLINE) {
+			destroy_buffer_and_get_content(text_buffer);
+			state->current_node = start_pos;
+			return NULL;
 		}
+		buffer_append_formatted(text_buffer, "%s", token_to_string(current));
 	}
+
+	if (match_token(state, TOKEN_RBRACKET) && match_token(state, TOKEN_LPAREN)) {
+		DynamicBuffer* url_buffer = create_dynamic_buffer(256);
+
+		while(peek_token(state) && peek_token(state)->type != TOKEN_RPAREN) {
+			Token* current = consume_token(state);
+			buffer_append_formatted(url_buffer, "%s", token_to_string(current));
+		}
+
+		if (match_token(state, TOKEN_RPAREN)) {
+			AstNode* link_node = create_ast_node(NODE_LINK, text_buffer->content, url_buffer->content);
+
+			destroy_buffer_and_get_content(text_buffer);
+			destroy_buffer_and_get_content(url_buffer);
+
+			return link_node;
+		}
+		destroy_buffer_and_get_content(url_buffer);
+	}
+
+	destroy_buffer_and_get_content(text_buffer);
 	state->current_node = start_pos;
 	return NULL;
 }
