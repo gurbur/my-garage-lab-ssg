@@ -51,8 +51,20 @@ AstNode* parse_block(ParserState* state) {
 		}
 
 		case TOKEN_NUMBER: {
-			if (calculate_indent(state) == indent) {
-				return parse_list(state, indent);
+			struct list_head* after_num_pos = temp_node->next;
+			if (after_num_pos == state->head) break;
+
+			Token* dot_token = list_entry(after_num_pos, Token, list);
+
+			if (dot_token->type == TOKEN_DOT) {
+				struct list_head* after_dot_pos = after_num_pos->next;
+				if (after_dot_pos == state->head) break;
+
+				Token* text_token = list_entry(after_dot_pos, Token, list);
+
+				if (text_token->type == TOKEN_TEXT && text_token->value && text_token->value[0] == ' ') {
+					return parse_list(state, indent);
+				}
 			}
 			break;
 		}

@@ -1,10 +1,10 @@
 CC = gcc
-CFLAGS = -g -Wall -Isrc/include -Isrc/html_generator
+CFLAGS = -g -Wall -Isrc/include
 
 BUILD_DIR = builds
 OBJ_DIR = $(BUILD_DIR)/obj
 
-SRC_DIRS = src/tokenizer src/parser src/html_generator src/template_engine src/utils tests/src
+SRC_DIRS = src src/tokenizer src/parser src/html_generator src/template_engine src/utils tests/src
 VPATH = $(SRC_DIRS)
 
 LIB_SRCS = dynamic_buffer.c \
