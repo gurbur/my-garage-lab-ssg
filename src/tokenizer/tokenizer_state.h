@@ -6,7 +6,7 @@
 #include "../include/dynamic_buffer.h"
 
 typedef struct {
-	FILE* stream;
+	const char* current;
 	struct list_head* tokens;
 	DynamicBuffer* text_buffer;
 } TokenizerState;

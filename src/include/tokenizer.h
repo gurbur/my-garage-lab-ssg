@@ -29,4 +29,5 @@ typedef struct {
 } Token;
 
 void tokenize_file(FILE* file, struct list_head* output);
+void tokenize_string(const char* content, struct list_head* output);
 

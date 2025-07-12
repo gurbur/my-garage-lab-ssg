@@ -4,49 +4,38 @@
 #include <stdbool.h>
 #include <ctype.h>
 
+#include "../include/tokenizer.h"
 #include "tokenizer_state.h"
 
 void handle_punctuation(TokenizerState* state, char c);
 void handle_fenced_code_block(TokenizerState* state);
-void handle_number(TokenizerState* state, char first_char);
+void handle_number(TokenizerState* state);
 
 static bool is_punctuation(char c) {
 	return strchr("#*-[]()!>\\.\n\t`", c) != NULL;
 }
 
-void tokenize_file(FILE* file, struct list_head* output) {
+void tokenize_string(const char* content, struct list_head* output) {
 	TokenizerState state;
-	state.stream = file;
+	state.current = content;
 	state.tokens = output;
 	state.text_buffer = create_dynamic_buffer(256);
+
 	if (!state.text_buffer) {
 		perror("Failed to create dynamic buffer");
 		exit(EXIT_FAILURE);
 	}
 
-	char current_char;
-	while ((current_char = fgetc(state.stream)) != EOF) {
-		if (current_char == '`') {
-			int next1 = fgetc(state.stream);
-			if (next1 == '`') {
-				int next2 = fgetc(state.stream);
-				if (next2 == '`') {
-					handle_fenced_code_block(&state);
-				} else {
-					if(next2 != EOF) ungetc(next2, state.stream);
-					if(next1 != EOF) ungetc(next1, state.stream);
-					handle_punctuation(&state, current_char);
-				}
-			} else {
-				if(next1 != EOF) ungetc(next1, state.stream);
-				handle_punctuation(&state, current_char);
-			}
-		} else if (is_punctuation(current_char)) {
-			handle_punctuation(&state, current_char);
-		} else if (isdigit(current_char)) {
-			handle_number(&state, current_char);
+	while (*state.current != '\0') {
+		if (strncmp(state.current, "```", 3) == 0) {
+			handle_fenced_code_block(&state);
+		} else if (is_punctuation(*state.current)) {
+			handle_punctuation(&state, *state.current);
+		} else if (isdigit(*state.current)) {
+			handle_number(&state);
 		} else {
-			append_char_to_buffer(state.text_buffer, current_char);
+			append_char_to_buffer(state.text_buffer, *state.current);
+			state.current++;
 		}
 	}
 
@@ -55,4 +44,24 @@ void tokenize_file(FILE* file, struct list_head* output) {
 	free(final_content);
 	
 	add_token(TOKEN_EOF, NULL, state.tokens);
+
+}
+
+void tokenize_file(FILE* file, struct list_head* output) {
+	fseek(file, 0, SEEK_END);
+	long length = ftell(file);
+	fseek(file, 0, SEEK_SET);
+
+	char* buffer = malloc(length + 1);
+	if (!buffer) {
+		perror("Failed to allocate buffer for file content");
+		exit(EXIT_FAILURE);
+	}
+
+	fread(buffer, 1, length, file);
+	buffer[length] = '\0';
+
+	tokenize_string(buffer, output);
+
+	free(buffer);
 }

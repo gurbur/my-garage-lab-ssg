@@ -44,6 +44,7 @@ void handle_punctuation(TokenizerState* state, char c) {
 		case '.': add_token(TOKEN_DOT, NULL, state->tokens); break;
 		case '`': add_token(TOKEN_BACKTICK, NULL, state->tokens); break;
 	}
+	state->current++;
 }
 
 void handle_fenced_code_block(TokenizerState* state) {
@@ -51,43 +52,43 @@ void handle_fenced_code_block(TokenizerState* state) {
 	add_token(TOKEN_BACKTICK, NULL, state->tokens);
 	add_token(TOKEN_BACKTICK, NULL, state->tokens);
 	add_token(TOKEN_BACKTICK, NULL, state->tokens);
+	state->current += 3;
 
-	char current_char;
-	while ((current_char = fgetc(state->stream)) != EOF && current_char != '\n') {
-		append_char_to_buffer(state->text_buffer, current_char);
+	while (*state->current && *state->current != '\n') {
+		append_char_to_buffer(state->text_buffer, *state->current++);
 	}
 	flush_buffer_as_token(state->text_buffer, TOKEN_TEXT, state->tokens);
-	if (current_char == '\n') add_token(TOKEN_NEWLINE, NULL, state->tokens);
+	if (*state->current == '\n') {
+		add_token(TOKEN_NEWLINE, NULL, state->tokens);
+		state->current++;
+	}
 
-	while ((current_char = fgetc(state->stream)) != EOF) {
-		if (current_char == '`') {
-			char next1 = fgetc(state->stream);
-			char next2 = fgetc(state->stream);
-			if (next1 == '`' && next2 == '`') {
-				flush_buffer_as_token(state->text_buffer, TOKEN_TEXT, state->tokens);
-				add_token(TOKEN_BACKTICK, NULL, state->tokens);
-				add_token(TOKEN_BACKTICK, NULL, state->tokens);
-				add_token(TOKEN_BACKTICK, NULL, state->tokens);
-				return;
-			}
-			ungetc(next2, state->stream);
-			ungetc(next1, state->stream);
+	while (*state->current) {
+		if (strncmp(state->current, "```", 3) == 0) {
+			flush_buffer_as_token(state->text_buffer, TOKEN_TEXT, state->tokens);
+			add_token(TOKEN_BACKTICK, NULL, state->tokens);
+			add_token(TOKEN_BACKTICK, NULL, state->tokens);
+			add_token(TOKEN_BACKTICK, NULL, state->tokens);
+			state->current += 3;
+			return;
 		}
-		append_char_to_buffer(state->text_buffer, current_char);
+		append_char_to_buffer(state->text_buffer, *state->current++);
 	}
 }
 
-void handle_number(TokenizerState* state, char first_char) {
+void handle_number(TokenizerState* state) {
 	flush_buffer_as_token(state->text_buffer, TOKEN_TEXT, state->tokens);
-	append_char_to_buffer(state->text_buffer, first_char);
 	
-	int next_char;
-	while ((next_char = fgetc(state->stream)) != EOF && isdigit(next_char)) {
-		append_char_to_buffer(state->text_buffer, next_char);
-	}
-	if (next_char != EOF) {
-		ungetc(next_char, state->stream);
+	const char* start = state->current;
+	while (isdigit(*state->current)) {
+		state->current++;
 	}
 	
-	flush_buffer_as_token(state->text_buffer, TOKEN_NUMBER, state->tokens);
+	size_t len = state->current - start;
+	char* value = malloc(len + 1);
+	strncpy(value, start, len);
+	value[len] = '\0';
+
+	add_token(TOKEN_NUMBER, value, state->tokens);
+	free(value);
 }
