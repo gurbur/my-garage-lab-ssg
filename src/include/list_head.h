@@ -12,7 +12,7 @@
  * @member: the name of the member within the struct.
  *
  */
-#define offsetof(TYPE, MEMBER)  ((size_t)&((TYPE *)0)->MEMBER)
+//#define offsetof(TYPE, MEMBER)  ((size_t)&((TYPE *)0)->MEMBER)
 
 #define container_of(ptr, type, member) ({              \
     void *__mptr = (void *)(ptr);                   \
