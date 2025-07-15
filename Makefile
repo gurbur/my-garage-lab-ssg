@@ -11,7 +11,7 @@ LIB_SRCS = dynamic_buffer.c hash_table.c \
 					 token_handlers.c tokenizer.c \
 					 parser_utils.c inline_parser.c block_parser.c parser.c \
 					 html_generator.c node_renderer.c \
-					 template_engine.c
+					 template_engine.c context_manager.c template_utils.c
 
 LIB_OBJS = $(addprefix $(OBJ_DIR)/, $(LIB_SRCS:.c=.o))
 
