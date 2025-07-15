@@ -1,8 +1,8 @@
 #pragma once
 
-#include "list_head.h"
+#include "../utils/hash_table.h"
 
-typedef struct list_head TemplateContext;
+typedef HashTable TemplateContext;
 
 TemplateContext* create_template_context();
 void add_to_context(TemplateContext* context, const char* key, const char* value);

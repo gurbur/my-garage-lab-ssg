@@ -3,12 +3,7 @@
 #include <string.h>
 #include "../include/template_engine.h"
 #include "../include/dynamic_buffer.h"
-
-typedef struct {
-	char* key;
-	char* value;
-	struct list_head list;
-} TemplateData;
+#include "../utils/hash_table.h"
 
 static char* read_file_into_string(const char* filepath) {
 	FILE* file = fopen(filepath, "r");
@@ -53,41 +48,19 @@ static char* replace_all_str(const char* orig, const char* rep, const char* with
 }
 
 TemplateContext* create_template_context() {
-	TemplateContext* context = (TemplateContext*)malloc(sizeof(TemplateContext));
-	if (context) {
-		INIT_LIST_HEAD(context);
-	}
-	return context;
+	return ht_create(128);
 }
 
 void add_to_context(TemplateContext* context, const char* key, const char* value) {
-	TemplateData* data = (TemplateData*)malloc(sizeof(TemplateData));
-	if (!data) return;
-
-	data->key = strdup(key);
-	data->value = strdup(value);
-	list_add_tail(&data->list, context);
+	ht_set(context, key, strdup(value));
 }
 
 void free_template_context(TemplateContext* context) {
-	TemplateData *pos, *n;
-	list_for_each_entry_safe(pos, n, context, list) {
-		free(pos->key);
-		free(pos->value);
-		list_del(&pos->list);
-		free(pos);
-	}
-	free(context);
+	ht_destroy(context, free);
 }
 
 const char* get_from_context(TemplateContext* context, const char* key) {
-	TemplateData *pos;
-	list_for_each_entry(pos, context, list) {
-		if (strcmp(pos->key, key) == 0) {
-			return pos->value;
-		}
-	}
-	return NULL;
+	return (const char*)ht_get(context, key);
 }
 
 static char* create_component_path(const char* placeholder_start) {
@@ -140,14 +113,18 @@ char* render_template(const char* layout_path, TemplateContext* context) {
 		current_html = new_html;
 	}
 
-	TemplateData* pos;
-	list_for_each_entry(pos, context, list) {
-		char placeholder[256];
-		snprintf(placeholder, sizeof(placeholder), "{{ %s }}", pos->key);
+	for (size_t i = 0; i < context->size; i++) {
+		HashEntry* entry = context->entries[i];
+		while (entry != NULL) {
+			char placeholder[256];
+			snprintf(placeholder, sizeof(placeholder), "{{ %s }}", entry->key);
 
-		char* new_html = replace_all_str(current_html, placeholder, pos->value);
-		free(current_html);
-		current_html = new_html;
+			char* new_html = replace_all_str(current_html, placeholder, (const char*)entry->value);
+			free(current_html);
+			current_html = new_html;
+
+			entry = entry->next;
+		}
 	}
 
 	return current_html;
