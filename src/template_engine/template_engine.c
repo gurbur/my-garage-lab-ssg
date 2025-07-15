@@ -5,6 +5,24 @@
 #include "../include/template_engine.h"
 #include "../include/dynamic_buffer.h"
 #include "../utils/hash_table.h"
+#include "../include/list_head.h"
+
+typedef struct {
+	const char* path;
+	struct list_head list;
+} DependencyNode;
+
+static bool is_in_dependency_stack(const char* path, struct list_head* dependency_stack) {
+	DependencyNode* pos;
+	list_for_each_entry(pos, dependency_stack, list) {
+		if (strcmp(pos->path, path) == 0) {
+			return true;
+		}
+	}
+	return false;
+}
+
+
 
 static char* read_file_into_string(const char* filepath) {
 	FILE* file = fopen(filepath, "r");
@@ -83,6 +101,51 @@ static char* create_component_path(const char* placeholder_start) {
 	return path;
 }
 
+static char* render_components_recursively(char* current_html, TemplateContext* context, struct list_head* dependency_stack) {
+	char* component_tag_start;
+	while ((component_tag_start = strstr(current_html, "{{ component:"))) {
+		char* component_tag_end = strstr(component_tag_start, "}}");
+		if (!component_tag_end) break;
+
+		size_t tag_len = (component_tag_end - component_tag_start) + strlen("}}");
+		char* component_path = create_component_path(component_tag_start);
+		if (!component_path) break;
+
+		if (is_in_dependency_stack(component_path, dependency_stack)) {
+			fprintf(stderr, "Error: circular component dependency detected! %s is already in the render stack.\n", component_path);
+			free(component_path);
+			char* new_html = replace_all_str(current_html, component_tag_start, "");
+			free(current_html);
+			current_html = new_html;
+			continue;
+		}
+
+		DependencyNode new_dep;
+		new_dep.path = component_path;
+		list_add_tail(&new_dep.list, dependency_stack);
+
+		char* component_content = read_file_into_string(component_path);
+		if (!component_content) component_content = strdup("");
+
+		char* rendered_component = render_components_recursively(component_content, context, dependency_stack);
+
+		list_del(&new_dep.list);
+
+		char* full_tag = malloc(tag_len + 1);
+		strncpy(full_tag, component_tag_start, tag_len);
+		full_tag[tag_len] = '\0';
+
+		char* new_html = replace_all_str(current_html, full_tag, rendered_component);
+
+		free(full_tag);
+		free(rendered_component);
+		free(component_path);
+		free(current_html);
+		current_html = new_html;
+	}
+	return current_html;
+}
+
 char* render_template(const char* layout_path, TemplateContext* context) {
 	char* current_html = read_file_into_string(layout_path);
 	if (!current_html) return NULL;
@@ -114,6 +177,9 @@ char* render_template(const char* layout_path, TemplateContext* context) {
 		current_html = new_html;
 	}
 	
+	LIST_HEAD(dependency_stack);
+	current_html = render_components_recursively(current_html, context, &dependency_stack);
+
 	DynamicBuffer* output_buffer = create_dynamic_buffer(strlen(current_html) * 1.5);
 	const char* p = current_html;
 
