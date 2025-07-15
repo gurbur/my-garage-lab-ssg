@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "../include/template_engine.h"
 #include "../include/dynamic_buffer.h"
 #include "../utils/hash_table.h"
@@ -112,20 +113,47 @@ char* render_template(const char* layout_path, TemplateContext* context) {
 		free(current_html);
 		current_html = new_html;
 	}
+	
+	DynamicBuffer* output_buffer = create_dynamic_buffer(strlen(current_html) * 1.5);
+	const char* p = current_html;
 
-	for (size_t i = 0; i < context->size; i++) {
-		HashEntry* entry = context->entries[i];
-		while (entry != NULL) {
-			char placeholder[256];
-			snprintf(placeholder, sizeof(placeholder), "{{ %s }}", entry->key);
+	while(*p) {
+		if (strncmp(p, "{{ ", 3) == 0) {
+			const char* key_start = p + 3;
+			const char* key_end = strstr(key_start, " }}");
 
-			char* new_html = replace_all_str(current_html, placeholder, (const char*)entry->value);
-			free(current_html);
-			current_html = new_html;
+			if (key_end) {
+				size_t full_placeholder_len = (key_end - p) + 3;
 
-			entry = entry->next;
+				while (key_start < key_end && isspace((unsigned char)*key_start)) key_start++;
+				const char* temp_end = key_end;
+				while (temp_end > key_start && isspace((unsigned char)*(temp_end - 1))) temp_end--;
+
+				size_t key_len = temp_end - key_start;
+
+				if (key_len > 0) {
+					char key[256];
+					if (key_len < sizeof(key)) {
+						strncpy(key, key_start, key_len);
+						key[key_len] = '\0';
+						const char* value = get_from_context(context, key);
+						if (value) {
+							buffer_append_formatted(output_buffer, "%s", value);
+						} else {
+							buffer_append_formatted(output_buffer, "%.*s", (int)full_placeholder_len, p);
+						}
+					}
+				} else {
+					buffer_append_formatted(output_buffer, "%.*s", (int)full_placeholder_len, p);
+				}
+				p = key_end + 3;
+				continue;
+			}
 		}
+		buffer_append_formatted(output_buffer, "%c", *p);
+		p++;
 	}
 
-	return current_html;
+	free(current_html);
+	return destroy_buffer_and_get_content(output_buffer);
 }
