@@ -5,6 +5,7 @@
 #include "../../src/include/list_head.h"
 #include "../../src/include/tokenizer.h"
 #include "../../src/include/parser.h"
+#include "../../src/include/dynamic_buffer.h"
 
 
 static void free_token_list(struct list_head* head) {
@@ -61,7 +62,10 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "Usage: %s <input_markdown_file>\n", argv[0]);
 		return EXIT_FAILURE;
 	}
+	const char* input_filename = argv[1];
 
+	SiteContext* s_context = create_site_context(".");
+	
 	// create test file
 	FILE* test_file = fopen(argv[1], "r");
 	if (!test_file) {
@@ -69,13 +73,20 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 	}
 
+	DynamicBuffer* db = create_dynamic_buffer(0);
+	char line[1024];
+	while(fgets(line, sizeof(line), test_file)) {
+		buffer_append_formatted(db, "%s", line);
+	}
+	fclose(test_file);
+	char* content_md = destroy_buffer_and_get_content(db);
+
 	// run tokenizer
 	LIST_HEAD(token_list);
-	tokenize_file(test_file, &token_list);
-	fclose(test_file);
+	tokenize_string(content_md, &token_list);
 
 	// run parser
-	AstNode* ast_root = parse_tokens(&token_list);
+	AstNode* ast_root = parse_tokens(&token_list, s_context, input_filename);
 
 	// print AST
 	print_ast_stdout(ast_root, 0);
@@ -83,6 +94,7 @@ int main(int argc, char *argv[]) {
 	// clean
 	free_token_list(&token_list);
 	free_ast(ast_root);
+	free_site_context(s_context);
 
 	return EXIT_SUCCESS;
 }

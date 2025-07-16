@@ -6,6 +6,8 @@
 #include "../../src/include/tokenizer.h"
 #include "../../src/include/parser.h"
 #include "../../src/include/html_generator.h"
+#include "../../src/include/site_context.h"
+#include "../../src/include/dynamic_buffer.h"
 
 static void free_token_list(struct list_head* head) {
 	Token *current_token, *temp;
@@ -21,20 +23,30 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "Usage: %s <input_markdown_file>\n", argv[0]);
 		return EXIT_FAILURE;
 	}
-
 	const char* input_filename = argv[1];
+
+	SiteContext* s_context = create_site_context(".");
 
 	FILE* test_file = fopen(input_filename, "r");
 	if (!test_file) {
 		perror("unable to open file");
+		free_site_context(s_context);
 		return EXIT_FAILURE;
 	}
 
-	LIST_HEAD(token_list);
-	tokenize_file(test_file, &token_list);
+	DynamicBuffer* db = create_dynamic_buffer(0);
+	char line[1024];
+	while(fgets(line, sizeof(line), test_file)) {
+		buffer_append_formatted(db, "%s", line);
+	}
 	fclose(test_file);
+	char* content_md = destroy_buffer_and_get_content(db);
 
-	AstNode* ast_root = parse_tokens(&token_list);
+	LIST_HEAD(token_list);
+	tokenize_string(content_md, &token_list);
+	free(content_md);
+
+	AstNode* ast_root = parse_tokens(&token_list, s_context, input_filename);
 
 	char* html_output = generate_html_from_ast(ast_root);
 
@@ -45,6 +57,7 @@ int main(int argc, char *argv[]) {
 	free(html_output);
 	free_ast(ast_root);
 	free_token_list(&token_list);
+	free_site_context(s_context);
 
 	return EXIT_SUCCESS;
 }
