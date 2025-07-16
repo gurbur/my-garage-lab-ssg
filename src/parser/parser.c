@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stddef.h>
 #include "parser_utils.h"
 #include "block_parser.h"
 

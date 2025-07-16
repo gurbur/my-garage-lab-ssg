@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 
 #include "../../src/include/list_head.h"
 #include "../../src/include/tokenizer.h"
