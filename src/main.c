@@ -11,7 +11,7 @@
 #include "include/html_generator.h"
 #include "include/template_engine.h"
 #include "include/dynamic_buffer.h"
-#include "include/site_map.h"
+#include "include/site_context.h"
 
 #define MAX_IGNORE_PATTERNS 100
 #define MAX_PATH_LENGTH 1024
@@ -84,21 +84,24 @@ static char* parse_front_matter(FILE* file, TemplateContext* context) {
 	return destroy_buffer_and_get_content(db);
 }
 
-void process_file(const char* input_path, const char* output_path) {
-	printf("Processing: %s\n", input_path);
+void process_file(const char* vault_path, const char* input_rel_path, const char* output_rel_path, SiteContext* s_context) {
+	printf("Processing: %s\n", input_rel_path);
 
-	FILE* md_file = fopen(input_path, "r");
+	char full_input_path[MAX_PATH_LENGTH];
+	snprintf(full_input_path, sizeof(full_input_path), "%s/%s", vault_path, input_rel_path);
+
+	FILE* md_file = fopen(full_input_path, "r");
 	if (!md_file) {
 		perror("Could not open makedown file");
 		return;
 	}
 
-	TemplateContext* context = create_template_context();
-	char* content_md = parse_front_matter(md_file, context);
+	TemplateContext* t_context = create_template_context();
+	char* content_md = parse_front_matter(md_file, t_context);
 	fclose(md_file);
 
 	if (!content_md) {
-		md_file = fopen(input_path, "r");
+		md_file = fopen(full_input_path, "r");
 		DynamicBuffer* db = create_dynamic_buffer(0);
 		char line[MAX_PATH_LENGTH];
 		while (fgets(line, sizeof(line), md_file)) {
@@ -110,18 +113,21 @@ void process_file(const char* input_path, const char* output_path) {
 
 	LIST_HEAD(token_list);
 	tokenize_string(content_md, &token_list);
-	AstNode* ast_root = parse_tokens(&token_list);
+	AstNode* ast_root = parse_tokens(&token_list, s_context, input_rel_path);
 	char* content_html = generate_html_from_ast(ast_root);
-	add_to_context(context, "post_content", content_html);
+	add_to_context(t_context, "post_content", content_html);
 
-	const char* layout_key = get_from_context(context, "layout");
+	const char* layout_key = get_from_context(t_context, "layout");
 	char layout_path[MAX_PATH_LENGTH];
 	snprintf(layout_path, sizeof(layout_path), "templates/layout/%s.html", (layout_key && *layout_key) ? layout_key : "post_page_layout");
 
-	char* final_html = render_template(layout_path, context);
+	char* final_html = render_template(layout_path, t_context);
 
 	if (final_html) {
-		char* out_dir = strdup(output_path);
+		char full_output_path[MAX_PATH_LENGTH];
+		snprintf(full_output_path, sizeof(full_output_path), "ssg_output/%s", output_rel_path);
+
+		char* out_dir = strdup(full_output_path);
 		char* last_slash = strrchr(out_dir, '/');
 		if (last_slash) {
 			*last_slash = '\0';
@@ -129,7 +135,7 @@ void process_file(const char* input_path, const char* output_path) {
 		}
 		free(out_dir);
 
-		FILE* out_file = fopen(output_path, "w");
+		FILE* out_file = fopen(full_output_path, "w");
 		if (out_file) {
 			fprintf(out_file, "%s", final_html);
 			fclose(out_file);
@@ -140,56 +146,25 @@ void process_file(const char* input_path, const char* output_path) {
 	free(content_html);
 	free(final_html);
 	free_ast(ast_root);
-	free_template_context(context);
+	free_template_context(t_context);
 }
 
-void walk_directory(const char* base_path, const char* current_path, const char* output_dir) {
-	char full_path[MAX_PATH_LENGTH];
-	snprintf(full_path, sizeof(full_path), "%s/%s", base_path, current_path);
-
-	DIR* dir = opendir(full_path);
-	if (!dir) return;
-
-	struct dirent* entry;
-	while ((entry = readdir(dir)) != NULL) {
-		if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
-
-		char path_relative_to_base[MAX_PATH_LENGTH];
-		snprintf(path_relative_to_base, sizeof(path_relative_to_base), "%s/%s", current_path, entry->d_name);
-
-		char entry_full_path[MAX_PATH_LENGTH];
-		snprintf(entry_full_path, sizeof(entry_full_path), "%s/%s", full_path, entry->d_name);
-
-		if (is_ignored(path_relative_to_base + 1)) continue;
-
-		struct stat entry_stat;
-		stat(entry_full_path, &entry_stat);
-
-		if (S_ISDIR(entry_stat.st_mode)) {
-			walk_directory(base_path, path_relative_to_base, output_dir);
-		} else if (S_ISREG(entry_stat.st_mode) && strstr(entry->d_name, ".md")) {
-			char output_path[MAX_PATH_LENGTH];
-			snprintf(output_path, sizeof(output_path), "%s%s", output_dir, path_relative_to_base);
-
-			char* dot = strrchr(output_path, '.');
-			if (dot && strcmp(dot, ".md") == 0) {
-				strcpy(dot, ".html");
-			}
-			process_file(entry_full_path, output_path);
-		}
+void process_nodes_recursively(const char* vault_path, NavNode* node, SiteContext* s_context) {
+	if (is_ignored(node->full_path)) {
+		return;
 	}
-	closedir(dir);
-}
 
+	if (node->is_directory) {
+		char output_path[MAX_PATH_LENGTH];
+		snprintf(output_path, sizeof(output_path), "ssg_output/%s", node->full_path);
+		mkdir(output_path, 0755);
 
-static void free_token_list(struct list_head* head) {
-	Token *current_token, *temp;
-	list_for_each_entry_safe(current_token, temp, head, list) {
-		list_del(&current_token->list);
-		if (current_token->value) {
-			free(current_token->value);
+		NavNode* child;
+		list_for_each_entry(child, &node->children, sibling) {
+			process_nodes_recursively(vault_path, child, s_context);
 		}
-		free(current_token);
+	} else if (strstr(node->name, ".md")) {
+		process_file(vault_path, node->full_path, node->output_path, s_context);
 	}
 }
 
@@ -204,16 +179,16 @@ int main(int argc, char *argv[]) {
 	printf("Starting SSG build for vault: %s\n", vault_path);
 
 	printf("Scanning vault and creating site map...\n");
-	SiteMap* site_map = create_site_map();
-	populate_site_map(site_map, vault_path);
-	printf("Site map created with %zu files.\n", site_map->size);
+	SiteContext* site_context = create_site_context(vault_path);
+	printf("Site map created.\n");
 
 	load_ssgignore(vault_path);
 
 	mkdir(output_dir, 0755);
 
-	walk_directory(vault_path, "", output_dir);
+	process_nodes_recursively(vault_path, site_context->root, site_context);
 
+	free_site_context(site_context);
 	free_ignore_patterns();
 
 	printf("Build finished successfully!\n");

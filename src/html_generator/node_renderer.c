@@ -43,7 +43,7 @@ void render_inline_node(const AstNode* node, DynamicBuffer* buffer) {
 		case NODE_ITALIC_AND_BOLD:  buffer_append_formatted(buffer, "<em><strong>%s</strong></em>", node->data1); break;
 		case NODE_CODE:             buffer_append_formatted(buffer, "<code>%s</code>", node->data1); break;
 		case NODE_LINK:             buffer_append_formatted(buffer, "<a href=\"%s\">%s</a>", node->data2, node->data1); break;
-		case NODE_IMAGE_LINK:       buffer_append_formatted(buffer, "<img src=\"%s\" alt=\"%s\">", node->data1, node->data1); break;
+		case NODE_IMAGE_LINK:       buffer_append_formatted(buffer, "<img src=\"%s\" alt=\"%s\">", node->data2, node->data1); break;
 		default: break;
 	}
 }

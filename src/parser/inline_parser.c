@@ -3,6 +3,8 @@
 #include "inline_parser.h"
 #include "../include/dynamic_buffer.h"
 
+#define MAX_PATH_LENGTH 1024
+
 static AstNode* parse_emphasis(ParserState* state);
 static AstNode* parse_inline_code(ParserState* state);
 static AstNode* parse_standard_link(ParserState* state);
@@ -182,6 +184,16 @@ static AstNode* parse_standard_link(ParserState* state) {
 	return NULL;
 }
 
+static char* calculate_relative_path(const char* from_path, const char* to_path) {
+	if (!from_path || !to_path) return strdup("#");
+
+	char* relative_path = malloc(strlen(to_path) + 2);
+	if (relative_path) {
+		sprintf(relative_path, "/%s", to_path);
+	}
+	return relative_path;
+}
+
 static AstNode* parse_obsidian_link(ParserState* state, bool is_image) {
 	struct list_head* start_pos = state->current_node;
 	if (is_image) {
@@ -205,9 +217,33 @@ static AstNode* parse_obsidian_link(ParserState* state, bool is_image) {
 	}
 
 	if (match_token(state, TOKEN_RBRACKET) && match_token(state, TOKEN_RBRACKET)) {
-		AstNode* link_node = create_ast_node(is_image ? NODE_IMAGE_LINK : NODE_LINK, filename_buffer->content, is_image ? NULL : filename_buffer->content);
-		char* temp_content = destroy_buffer_and_get_content(filename_buffer);
-		free(temp_content);
+		AstNode* link_node = NULL;
+		char* link_text = strdup(filename_buffer->content);
+
+		NavNode* target_node = (NavNode*)ht_get(state->s_context->fast_lookup, filename_buffer->content);
+
+		if (!target_node) {
+			char lookup_key_with_ext[MAX_PATH_LENGTH];
+			snprintf(lookup_key_with_ext, sizeof(lookup_key_with_ext), "%s.md", filename_buffer->content);
+			target_node = (NavNode*)ht_get(state->s_context->fast_lookup, lookup_key_with_ext);
+		}
+
+		if (target_node) {
+			char* relative_path = calculate_relative_path(state->current_file_path, target_node->output_path);
+
+			link_node = create_ast_node(
+					is_image ? NODE_IMAGE_LINK : NODE_LINK,
+					link_text,
+					relative_path
+					);
+			free(relative_path);
+		} else {
+			fprintf(stderr, "Warning: Link target not found for '[[%s]]'\n", filename_buffer->content);
+			link_node = create_ast_node(NODE_LINK, link_text, "#");
+		}
+
+		destroy_buffer_and_get_content(filename_buffer);
+		free(link_text);
 		return link_node;
 	}
 	char* temp_content = destroy_buffer_and_get_content(filename_buffer);

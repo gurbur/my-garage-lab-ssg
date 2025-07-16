@@ -4,10 +4,14 @@
 #include <stdbool.h>
 #include "../include/list_head.h"
 #include "../include/parser.h"
+#include "../include/site_context.h"
 
 typedef struct {
 	struct list_head* current_node;
 	struct list_head* head;
+
+	SiteContext* s_context;
+	const char* current_file_path;
 } ParserState;
 
 AstNode* create_ast_node(AstNodeType type, const char* data1, const char* data2);

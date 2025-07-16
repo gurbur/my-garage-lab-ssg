@@ -2,6 +2,7 @@
 
 #include "list_head.h"
 #include "tokenizer.h"
+#include "site_context.h"
 
 typedef enum {
 	NODE_DOCUMENT = 0,
@@ -33,6 +34,6 @@ typedef struct {
 } AstNode;
 
 
-AstNode* parse_tokens(struct list_head* tokens);
+AstNode* parse_tokens(struct list_head* tokens, SiteContext* s_context, const char* current_file_path);
 void free_ast(AstNode* root);
 

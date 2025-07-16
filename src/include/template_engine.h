@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../utils/hash_table.h"
+#include "hash_table.h"
 
 typedef HashTable TemplateContext;
 

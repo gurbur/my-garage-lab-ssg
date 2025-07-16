@@ -3,10 +3,12 @@
 #include "parser_utils.h"
 #include "block_parser.h"
 
-AstNode* parse_tokens(struct list_head* token_head) {
+AstNode* parse_tokens(struct list_head* token_head, SiteContext* s_context, const char* current_file_path) {
 	ParserState p_state;
 	p_state.head = token_head;
 	p_state.current_node = token_head;
+	p_state.s_context = s_context;
+	p_state.current_file_path = current_file_path;
 
 	AstNode* doc_node = create_ast_node(NODE_DOCUMENT, NULL, NULL);
 

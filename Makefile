@@ -7,7 +7,7 @@ OBJ_DIR = $(BUILD_DIR)/obj
 SRC_DIRS = src src/tokenizer src/parser src/html_generator src/template_engine src/utils tests/src
 VPATH = $(SRC_DIRS)
 
-LIB_SRCS = dynamic_buffer.c hash_table.c site_map.c \
+LIB_SRCS = dynamic_buffer.c hash_table.c site_context.c \
 					 token_handlers.c tokenizer.c \
 					 parser_utils.c inline_parser.c block_parser.c parser.c \
 					 html_generator.c node_renderer.c \
