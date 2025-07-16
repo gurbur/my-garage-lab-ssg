@@ -11,6 +11,7 @@
 #include "include/html_generator.h"
 #include "include/template_engine.h"
 #include "include/dynamic_buffer.h"
+#include "include/site_map.h"
 
 #define MAX_IGNORE_PATTERNS 100
 #define MAX_PATH_LENGTH 1024
@@ -201,6 +202,11 @@ int main(int argc, char *argv[]) {
 	const char* output_dir = "ssg_output";
 
 	printf("Starting SSG build for vault: %s\n", vault_path);
+
+	printf("Scanning vault and creating site map...\n");
+	SiteMap* site_map = create_site_map();
+	populate_site_map(site_map, vault_path);
+	printf("Site map created with %zu files.\n", site_map->size);
 
 	load_ssgignore(vault_path);
 
