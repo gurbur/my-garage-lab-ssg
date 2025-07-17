@@ -12,6 +12,7 @@
 #include "include/template_engine.h"
 #include "include/dynamic_buffer.h"
 #include "include/site_context.h"
+#include "include/config_loader.h"
 
 #define MAX_IGNORE_PATTERNS 100
 #define MAX_PATH_LENGTH 1024
@@ -84,11 +85,16 @@ static char* parse_front_matter(FILE* file, TemplateContext* context) {
 	return destroy_buffer_and_get_content(db);
 }
 
-void process_file(const char* vault_path, const char* input_rel_path, const char* output_rel_path, SiteContext* s_context) {
-	printf("Processing: %s\n", input_rel_path);
+void copy_static_files(const char* src_dir, const char* dest_dir) {
+	printf("Copying static files from %s to %s...\n", src_dir, dest_dir);
+	//...
+}
+
+void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_context, TemplateContext* global_context) {
+	printf("Processing: %s\n", current_node->full_path);
 
 	char full_input_path[MAX_PATH_LENGTH];
-	snprintf(full_input_path, sizeof(full_input_path), "%s/%s", vault_path, input_rel_path);
+	snprintf(full_input_path, sizeof(full_input_path), "%s/%s", vault_path, current_node->full_path);
 
 	FILE* md_file = fopen(full_input_path, "r");
 	if (!md_file) {
@@ -97,6 +103,8 @@ void process_file(const char* vault_path, const char* input_rel_path, const char
 	}
 
 	TemplateContext* t_context = create_template_context();
+	copy_context(t_context, global_context);
+
 	char* content_md = parse_front_matter(md_file, t_context);
 	fclose(md_file);
 
@@ -113,11 +121,14 @@ void process_file(const char* vault_path, const char* input_rel_path, const char
 
 	LIST_HEAD(token_list);
 	tokenize_string(content_md, &token_list);
-	AstNode* ast_root = parse_tokens(&token_list, s_context, input_rel_path);
+	AstNode* ast_root = parse_tokens(&token_list, s_context, current_node->full_path);
 	char* content_html = generate_html_from_ast(ast_root);
 	add_to_context(t_context, "post_content", content_html);
 
+	generate_breadcrumb_html(current_node, t_context);
+
 	const char* layout_key = get_from_context(t_context, "layout");
+	const char* default_layout = get_from_context(global_context, "default_layout");
 	char layout_path[MAX_PATH_LENGTH];
 	snprintf(layout_path, sizeof(layout_path), "templates/layout/%s.html", (layout_key && *layout_key) ? layout_key : "post_page_layout");
 
@@ -125,7 +136,7 @@ void process_file(const char* vault_path, const char* input_rel_path, const char
 
 	if (final_html) {
 		char full_output_path[MAX_PATH_LENGTH];
-		snprintf(full_output_path, sizeof(full_output_path), "ssg_output/%s", output_rel_path);
+		snprintf(full_output_path, sizeof(full_output_path), "ssg_output/%s", current_node->output_path);
 
 		char* out_dir = strdup(full_output_path);
 		char* last_slash = strrchr(out_dir, '/');
@@ -149,7 +160,7 @@ void process_file(const char* vault_path, const char* input_rel_path, const char
 	free_template_context(t_context);
 }
 
-void process_nodes_recursively(const char* vault_path, NavNode* node, SiteContext* s_context) {
+void process_nodes_recursively(const char* vault_path, NavNode* node, SiteContext* s_context, TemplateContext* global_context) {
 	if (is_ignored(node->full_path)) {
 		return;
 	}
@@ -161,10 +172,10 @@ void process_nodes_recursively(const char* vault_path, NavNode* node, SiteContex
 
 		NavNode* child;
 		list_for_each_entry(child, &node->children, sibling) {
-			process_nodes_recursively(vault_path, child, s_context);
+			process_nodes_recursively(vault_path, child, s_context, global_context);
 		}
 	} else if (strstr(node->name, ".md")) {
-		process_file(vault_path, node->full_path, node->output_path, s_context);
+		process_file(vault_path, node, s_context, global_context);
 	}
 }
 
@@ -178,17 +189,30 @@ int main(int argc, char *argv[]) {
 
 	printf("Starting SSG build for vault: %s\n", vault_path);
 
+	TemplateContext* global_context = create_template_context();
+	load_config("config.json", global_context);
+
 	printf("Scanning vault and creating site map...\n");
 	SiteContext* site_context = create_site_context(vault_path);
 	printf("Site map created.\n");
+
+	generate_sidebar_html(site_context, global_context);
 
 	load_ssgignore(vault_path);
 
 	mkdir(output_dir, 0755);
 
-	process_nodes_recursively(vault_path, site_context->root, site_context);
+	process_nodes_recursively(vault_path, site_context->root, site_context, global_context);
+
+	const char* static_dir = get_from_context(global_context, "static_dir");
+	if (static_dir) {
+		char dest_static_path[MAX_PATH_LENGTH];
+		snprintf(dest_static_path, sizeof(dest_static_path), "%s/%s", output_dir, static_dir);
+		copy_static_files(static_dir, dest_static_path);
+	}
 
 	free_site_context(site_context);
+	free_template_context(global_context);
 	free_ignore_patterns();
 
 	printf("Build finished successfully!\n");

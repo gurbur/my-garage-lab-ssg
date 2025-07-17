@@ -4,10 +4,10 @@ CFLAGS = -g -Wall -Isrc/include -Isrc/libs/cjson
 BUILD_DIR = builds
 OBJ_DIR = $(BUILD_DIR)/obj
 
-SRC_DIRS = src src/libs/ cjson src/tokenizer src/parser src/html_generator src/template_engine src/utils tests/src
+SRC_DIRS = src src/libs/cjson src/tokenizer src/parser src/html_generator src/template_engine src/utils tests/src
 VPATH = $(SRC_DIRS)
 
-LIB_SRCS = cJSON.c \
+LIB_SRCS = cJSON.c config_loader.c \
            dynamic_buffer.c hash_table.c site_context.c \
 					 token_handlers.c tokenizer.c \
 					 parser_utils.c inline_parser.c block_parser.c parser.c \

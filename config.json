@@ -1,0 +1,21 @@
+{
+	"site_title": "My Garage Lab",
+	"author": "Jihwan Kim",
+	"base_url": "https://gurbur.github.io/my-garage-lab",
+	"social": {
+		"github": "https://github.com/gurbur",
+		"email": "jihwan7577@gmail.com"
+	},
+	"templates": {
+		"default_layout": "post_page_layout",
+		"template_dir": "templates"
+	},
+	"build": {
+		"output_dir": "ssg_output",
+		"static_dir": "static",
+		"ignore_files": [
+			".obsidian",
+			"Excalidraw"
+		]
+	}
+}
