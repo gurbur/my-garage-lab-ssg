@@ -217,7 +217,9 @@ void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* 
 	}
 
 	if (node->is_directory) {
-		printf("[DIR] Entering directory: %s\n", node->full_path);
+		printf("[DIR] Generating index for: %s\n", node->full_path);
+
+		create_directories_recursively(node->output_path);
 
 		char* card_template_str = read_file_into_string("templates/components/card.html");
 		DynamicBuffer* post_list_buffer = create_dynamic_buffer(1024);
@@ -230,15 +232,20 @@ void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* 
 				char* dot = strrchr(title_no_ext, '.');
 				if (dot) *dot = '\0';
 
+				char* link_filename = strdup(child->output_path);
+				char* last_slash = strrchr(link_filename, '/');
+				const char* final_link = last_slash ? last_slash + 1 : link_filename;
+
 				add_to_context(card_context, "card_item_title", title_no_ext);
-				add_to_context(card_context, "card_item_link", child->output_path);
-				add_to_context(card_context, "card_item_content", "...");
+				add_to_context(card_context, "card_item_link", final_link);
+				add_to_context(card_context, "card_item_content", "내용 예시");
 
 				char* rendered_card = render_template("templates/components/card.html", card_context);
 				buffer_append_formatted(post_list_buffer, "%s", rendered_card);
 
 				free(rendered_card);
 				free(title_no_ext);
+				free(link_filename);
 				free_template_context(card_context);
 			}
 		}
@@ -247,13 +254,15 @@ void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* 
 
 		TemplateContext* page_context = create_template_context();
 		copy_context(page_context, global_context);
+
+		generate_breadcrumb_html(node, page_context);
+		add_to_context(page_context, "list_title", strlen(node->name) > 0 ? node->name : "Home");
 		add_to_context(page_context, "title", strlen(node->name) > 0 ? node->name : "Home");
 
 		add_to_context(page_context, "post_list_content", post_list_html);
 		char* content_html = render_template("templates/layout/post_list_layout.html", page_context);
 
 		add_to_context(page_context, "content", content_html);
-
 		char* final_html = render_template("templates/layout/base.html", page_context);
 
 		char output_path[MAX_PATH_LENGTH];
@@ -272,6 +281,7 @@ void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* 
 		}
 
 		free(post_list_html);
+		free(content_html);
 		free(final_html);
 		free_template_context(page_context);
 
