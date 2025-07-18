@@ -49,7 +49,7 @@ void parse_inline_elements(ParserState* state, AstNode* parent_node, bool is_lis
 
 		Token* current_token = consume_token(state);
 		if (current_token->type == TOKEN_NEWLINE) {
-			buffer_append_formatted(text_buffer, " ");
+			buffer_append_formatted(text_buffer, "\n");
 		} else {
 			buffer_append_formatted(text_buffer, "%s", token_to_string(current_token));
 		}

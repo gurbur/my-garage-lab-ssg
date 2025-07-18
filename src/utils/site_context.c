@@ -11,7 +11,7 @@
 #define MAX_PATH_LENGTH 1024
 
 static void scan_recursively(NavNode* parent, HashTable* fast_lookup, const char* base_path, const char*current_subpath);
-static void build_sidebar_html_recursively(NavNode* node, DynamicBuffer* buffer);
+static void build_sidebar_html_recursively(NavNode* node, DynamicBuffer* buffer, const char* base_url);
 
 static NavNode* create_nav_node(const char* name, const char* path, bool is_dir) {
 	NavNode* node = malloc(sizeof(NavNode));
@@ -109,9 +109,12 @@ static void scan_recursively(NavNode* parent, HashTable* fast_lookup, const char
 }
 
 void generate_sidebar_html(SiteContext* s_context, TemplateContext* global_context) {
+	const char* base_url = get_from_context(global_context, "base_url");
+	if (!base_url) base_url = "";
+
 	DynamicBuffer* buffer = create_dynamic_buffer(1024);
 	buffer_append_formatted(buffer, "<ul>\n");
-	build_sidebar_html_recursively(s_context->root, buffer);
+	build_sidebar_html_recursively(s_context->root, buffer, base_url);
 	buffer_append_formatted(buffer, "</ul>\n");
 
 	char* sidebar_html = destroy_buffer_and_get_content(buffer);
@@ -141,25 +144,20 @@ void generate_breadcrumb_html(NavNode* current_node, TemplateContext* local_cont
 	free(breadcrumb_html);
 }
 
-static void build_sidebar_html_recursively(NavNode* node, DynamicBuffer* buffer) {
+static void build_sidebar_html_recursively(NavNode* node, DynamicBuffer* buffer, const char* base_url) {
 	NavNode* child;
 
 	list_for_each_entry(child, &node->children, sibling) {
 		if (child->is_directory) {
-			buffer_append_formatted(buffer, "<li>%s\n", child->name);
+			buffer_append_formatted(buffer, "<li><a href=\"%s/%s/\">%s</a>\n", base_url, child->output_path, child->name);
 			if (!list_empty(&child->children)) {
 				buffer_append_formatted(buffer, "<ul>\n");
-				build_sidebar_html_recursively(child, buffer);
+				build_sidebar_html_recursively(child, buffer, base_url);
 				buffer_append_formatted(buffer, "</ul>\n");
 			}
 			buffer_append_formatted(buffer, "</li>\n");
 		} else if (strstr(child->name, ".md")) {
-			char name_no_ext[MAX_PATH_LENGTH];
-			strcpy(name_no_ext, child->name);
-			char* dot = strrchr(name_no_ext, '.');
-			if (dot) *dot = '\0';
-
-			buffer_append_formatted(buffer, "<li><a href=\"/%s\">%s</a></li>\n", child->output_path, name_no_ext);
+			//placeholder for later
 		}
 	}
 }
