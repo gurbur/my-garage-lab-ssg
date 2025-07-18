@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <stdbool.h>
 
+#include "include/ignore_handler.h"
 #include "include/list_head.h"
 #include "include/tokenizer.h"
 #include "include/parser.h"
@@ -15,43 +16,7 @@
 #include "include/site_context.h"
 #include "include/config_loader.h"
 
-#define MAX_IGNORE_PATTERNS 100
 #define MAX_PATH_LENGTH 1024
-
-static char* ignore_patterns[MAX_IGNORE_PATTERNS];
-static int ignore_count = 0;
-
-void load_ssgignore(const char* base_path) {
-	char ssgignore_path[MAX_PATH_LENGTH];
-	snprintf(ssgignore_path, sizeof(ssgignore_path), "%s/.ssgignore", base_path);
-
-	FILE* file = fopen(ssgignore_path, "r");
-	if (!file) return;
-
-	char line[MAX_PATH_LENGTH];
-	while (fgets(line, sizeof(line), file) && ignore_count < MAX_IGNORE_PATTERNS) {
-		line[strcspn(line, "\n")] = 0;
-		if (strlen(line) > 0) {
-			ignore_patterns[ignore_count++] = strdup(line);
-		}
-	}
-	fclose(file);
-}
-
-int is_ignored(const char* path) {
-	for (int i = 0; i < ignore_count; i++) {
-		if (strstr(path, ignore_patterns[i]) == path) {
-			return 1;
-		}
-	}
-	return 0;
-}
-
-void free_ignore_patterns() {
-	for (int i = 0; i < ignore_count; i++) {
-		free(ignore_patterns[i]);
-	}
-}
 
 static char* trim_whitespace(char* str) {
 	while (isspace((unsigned char)*str)) str++;
@@ -246,7 +211,7 @@ void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_
 }
 
 void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* s_context, TemplateContext* global_context) {
-	if (is_ignored(node->full_path) || node->name[0] == '.') {
+	if (is_ignored(node->full_path) || (strlen(node->name) > 0 && node->name[0] == '.')) {
 		printf("[SKIP] Ignoring path: %s\n", node->full_path);
 		return;
 	}
@@ -259,7 +224,7 @@ void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* 
 		NavNode* child;
 
 		list_for_each_entry(child, &node->children, sibling) {
-			if (!child->is_directory && strstr(child->name, ".md")) {
+			if (!child->is_directory && strstr(child->name, ".md") && !is_ignored(child->full_path)) {
 				TemplateContext* card_context = create_template_context();
 				char* title_no_ext = strdup(child->name);
 				char* dot = strrchr(title_no_ext, '.');

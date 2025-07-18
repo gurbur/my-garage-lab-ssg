@@ -7,6 +7,7 @@
 
 #include "../include/site_context.h"
 #include "../include/dynamic_buffer.h"
+#include "../include/ignore_handler.h"
 
 #define MAX_PATH_LENGTH 1024
 
@@ -137,7 +138,6 @@ void generate_breadcrumb_html(NavNode* current_node, TemplateContext* local_cont
 		buffer_append_formatted(buffer, " &gt; %s", token);
 		token = strtok(NULL, "/");
 	}
-	
 	free(path_copy);
 	char* breadcrumb_html = destroy_buffer_and_get_content(buffer);
 	add_to_context(local_context, "breadcrumb", breadcrumb_html);
@@ -148,6 +148,10 @@ static void build_sidebar_html_recursively(NavNode* node, DynamicBuffer* buffer,
 	NavNode* child;
 
 	list_for_each_entry(child, &node->children, sibling) {
+		if (is_ignored(child->full_path)) { // TODO: have to fix it.
+			continue;
+		}
+
 		if (child->is_directory) {
 			buffer_append_formatted(buffer, "<li><a href=\"%s/%s/\">%s</a>\n", base_url, child->output_path, child->name);
 			if (!list_empty(&child->children)) {

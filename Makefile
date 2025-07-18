@@ -7,7 +7,7 @@ OBJ_DIR = $(BUILD_DIR)/obj
 SRC_DIRS = src src/libs/cjson src/tokenizer src/parser src/html_generator src/template_engine src/utils tests/src
 VPATH = $(SRC_DIRS)
 
-LIB_SRCS = cJSON.c config_loader.c \
+LIB_SRCS = cJSON.c config_loader.c ignore_handler.c \
            dynamic_buffer.c hash_table.c site_context.c \
 					 token_handlers.c tokenizer.c \
 					 parser_utils.c inline_parser.c block_parser.c parser.c \
