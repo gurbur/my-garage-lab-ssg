@@ -303,11 +303,13 @@ int main(int argc, char *argv[]) {
 	printf("[STEP 2] Scanning vault and creating site context...\n");
 	SiteContext* site_context = create_site_context(vault_path);
 
-	printf("[STEP 3] Generating sidebar...\n");
+	printf("[STEP 3] Loading .ssgignore and preparing output directory...\n");
+	load_ssgignore(vault_path);
+
+	printf("[STEP 4] Generating sidebar...\n");
 	generate_sidebar_html(site_context, global_context);
 
-	printf("[STEP 4] Loading .ssgignore and preparing output directory...\n");
-	load_ssgignore(vault_path);
+	printf("[STEP 5] Preparing output directory...\n");
 	mkdir(output_dir, 0755);
 
 	printf("\n---- STARTING SITE GENERATION ----\n");

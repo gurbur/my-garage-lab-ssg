@@ -148,12 +148,13 @@ static void build_sidebar_html_recursively(NavNode* node, DynamicBuffer* buffer,
 	NavNode* child;
 
 	list_for_each_entry(child, &node->children, sibling) {
-		if (is_ignored(child->full_path)) { // TODO: have to fix it.
+		if (is_ignored(child->full_path)) {
 			continue;
 		}
 
 		if (child->is_directory) {
 			buffer_append_formatted(buffer, "<li><a href=\"%s/%s/\">%s</a>\n", base_url, child->output_path, child->name);
+
 			if (!list_empty(&child->children)) {
 				buffer_append_formatted(buffer, "<ul>\n");
 				build_sidebar_html_recursively(child, buffer, base_url);
