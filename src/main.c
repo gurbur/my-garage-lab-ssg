@@ -203,6 +203,14 @@ void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_
 
 	generate_breadcrumb_html(current_node, t_context);
 
+	if (get_from_context(t_context, "title") == NULL) {
+		char* title_no_ext = strdup(current_node->name);
+		char* dot = strrchr(title_no_ext, '.');
+		if (dot) *dot = '\0';
+		add_to_context(t_context, "title", title_no_ext);
+		free(title_no_ext);
+	}
+
 	const char* layout_key = get_from_context(t_context, "layout");
 	const char* default_layout = get_from_context(global_context, "default_layout");
 	char layout_path[MAX_PATH_LENGTH];
