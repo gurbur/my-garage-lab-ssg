@@ -20,9 +20,9 @@ static bool is_inline_node(const AstNode* node) {
 	}
 }
 
-static void render_node_recursively(const AstNode* node, DynamicBuffer* buffer);
+static void render_node_recursively(const AstNode* node, DynamicBuffer* buffer, TemplateContext* context);
 
-char* generate_html_from_ast(AstNode* ast_root) {
+char* generate_html_from_ast(AstNode* ast_root, TemplateContext* context) {
 	if (!ast_root) return NULL;
 
 	DynamicBuffer* buffer = create_dynamic_buffer(4096);
@@ -31,12 +31,12 @@ char* generate_html_from_ast(AstNode* ast_root) {
 		return NULL;
 	}
 
-	render_node_recursively(ast_root, buffer);
+	render_node_recursively(ast_root, buffer, context);
 
 	return destroy_buffer_and_get_content(buffer);
 }
 
-static void render_node_recursively(const AstNode* node, DynamicBuffer* buffer) {
+static void render_node_recursively(const AstNode* node, DynamicBuffer* buffer, TemplateContext* context) {
 	if (!node) return;
 
 	if (node->type == NODE_DOCUMENT) {
@@ -44,7 +44,7 @@ static void render_node_recursively(const AstNode* node, DynamicBuffer* buffer) 
 	} else if (node->type == NODE_LINE) {
 		render_self_closing_node(node, buffer);
 	} else if (is_inline_node(node)) {
-		render_inline_node(node, buffer);
+		render_inline_node(node, buffer, context);
 	} else {
 		render_opening_tag_for_node(node, buffer);
 	}
@@ -52,7 +52,7 @@ static void render_node_recursively(const AstNode* node, DynamicBuffer* buffer) 
 	if (!list_empty(&node->children)) {
 		AstNode* child;
 		list_for_each_entry(child, &node->children, list) {
-			render_node_recursively(child, buffer);
+			render_node_recursively(child, buffer, context);
 		}
 	}
 

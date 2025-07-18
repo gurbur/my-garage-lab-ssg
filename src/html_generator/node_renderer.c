@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "node_renderer.h"
 
 void render_opening_tag_for_node(const AstNode* node, DynamicBuffer* buffer) {
@@ -35,15 +37,37 @@ void render_closing_tag_for_node(const AstNode* node, DynamicBuffer* buffer) {
 	}
 }
 
-void render_inline_node(const AstNode* node, DynamicBuffer* buffer) {
+void render_inline_node(const AstNode* node, DynamicBuffer* buffer, TemplateContext* context) {
 	switch (node->type) {
 		case NODE_TEXT:             buffer_append_formatted(buffer, "%s", node->data1); break;
 		case NODE_ITALIC:           buffer_append_formatted(buffer, "<em>%s</em>", node->data1); break;
 		case NODE_BOLD:             buffer_append_formatted(buffer, "<strong>%s</strong>", node->data1); break;
 		case NODE_ITALIC_AND_BOLD:  buffer_append_formatted(buffer, "<em><strong>%s</strong></em>", node->data1); break;
 		case NODE_CODE:             buffer_append_formatted(buffer, "<code>%s</code>", node->data1); break;
-		case NODE_LINK:             buffer_append_formatted(buffer, "<a href=\"%s\">%s</a>", node->data2, node->data1); break;
-		case NODE_IMAGE_LINK:       buffer_append_formatted(buffer, "<img src=\"%s\" alt=\"%s\">", node->data2, node->data1); break;
+		case NODE_LINK: {
+			const char* url = node->data2;
+			const char* base_url = get_from_context(context, "base_url");
+			if (!base_url) base_url = "";
+
+			if (strncmp(url, "http://", 7) == 0 || strncmp(url, "https://", 8) == 0) {
+				buffer_append_formatted(buffer, "<a href=\"%s\">%s</a>", url, node->data1);
+			} else {
+				buffer_append_formatted(buffer, "<a href=\"%s%s\">%s</a>", base_url, url, node->data1);
+			}
+			break;
+		}
+		case NODE_IMAGE_LINK: {
+			const char* src = node->data2;
+			const char* base_url = get_from_context(context, "base_url");
+			if (!base_url) base_url = "";
+
+			if (strncmp(src, "http://", 7) == 0 || strncmp(src, "https://", 8) == 0) {
+				buffer_append_formatted(buffer, "<img src=\"%s\" alt=\"%s\">", src, node->data1);
+			} else {
+				buffer_append_formatted(buffer, "<img src=\"%s%s\" alt=\"%s\">", base_url, src, node->data1);
+			}
+			break;
+		}
 		default: break;
 	}
 }

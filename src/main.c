@@ -163,7 +163,7 @@ void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_
 	LIST_HEAD(token_list);
 	tokenize_string(content_md, &token_list);
 	AstNode* ast_root = parse_tokens(&token_list, s_context, current_node->full_path);
-	char* content_html_partial = generate_html_from_ast(ast_root);
+	char* content_html_partial = generate_html_from_ast(ast_root, t_context);
 	add_to_context(t_context, "post_content", content_html_partial);
 
 	generate_breadcrumb_html(current_node, t_context);
