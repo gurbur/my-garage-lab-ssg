@@ -18,6 +18,39 @@
 
 #define MAX_PATH_LENGTH 1024
 
+typedef struct {
+	NavNode* node;
+	int id;
+	int order;
+	char* date;
+	bool has_order;
+} PostSortInfo;
+
+int compare_posts(const void* a, const void* b) {
+	const PostSortInfo* postA = (const PostSortInfo*)a;
+	const PostSortInfo* postB = (const PostSortInfo*)b;
+
+	if (postA->has_order != postB->has_order) {
+		return postB->has_order - postA->has_order;
+	}
+
+	if (postA->has_order) {
+		if (postA->order != postB->order) {
+			return postA->order - postB->order;
+		}
+	}
+
+	if (postA->id != postB->id) {
+		return postA->id - postB->id;
+	}
+
+	if (postA->date && postB->date) {
+		return strcmp(postA->date, postB->date);
+	}
+
+	return 0;
+}
+
 static char* trim_whitespace(char* str) {
 	while (isspace((unsigned char)*str)) str++;
 	if (*str == 0) return str;
@@ -26,6 +59,41 @@ static char* trim_whitespace(char* str) {
 	while (end > str && isspace((unsigned char)*end)) end--;
 	end[1] = '\0';
 	return str;
+}
+
+void extract_sort_info(const char* file_path, PostSortInfo* info) {
+	info->id = 0;
+	info->order = 0;
+	info->date = strdup("9999-99-99");
+	info->has_order = false;
+
+	FILE* file = fopen(file_path, "r");
+	if (!file) return;
+
+	char line[MAX_PATH_LENGTH];
+	if (!fgets(line, sizeof(line), file) || strncmp(line, "---", 3) != 0) {
+		fclose(file);
+		return;
+	}
+
+	while (fgets(line, sizeof(line), file) && strncmp(line, "---", 3) != 0) {
+		char* key = strtok(line, ":");
+		char* value_str = strtok(NULL, "\n");
+		if (key && value_str) {
+			char* trimmed_key = trim_whitespace(key);
+			char* trimmed_value = trim_whitespace(value_str);
+			if (strcmp(trimmed_key, "id") == 0) info->id = atoi(trimmed_value);
+			if (strcmp(trimmed_key, "order") == 0) {
+				info->order = atoi(trimmed_value);
+				info->has_order = true;
+			}
+			if (strcmp(trimmed_key, "date") == 0) {
+				free(info->date);
+				info->date = strdup(trimmed_value);
+			}
+		}
+	}
+	fclose(file);
 }
 
 static char* read_file_into_string(const char* filepath) {
@@ -221,34 +289,59 @@ void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* 
 
 		create_directories_recursively(node->output_path);
 
-		char* card_template_str = read_file_into_string("templates/components/card.html");
-		DynamicBuffer* post_list_buffer = create_dynamic_buffer(1024);
+		int post_count = 0;
 		NavNode* child;
-
 		list_for_each_entry(child, &node->children, sibling) {
 			if (!child->is_directory && strstr(child->name, ".md") && !is_ignored(child->full_path)) {
-				TemplateContext* card_context = create_template_context();
-				char* title_no_ext = strdup(child->name);
-				char* dot = strrchr(title_no_ext, '.');
-				if (dot) *dot = '\0';
-
-				char* link_filename = strdup(child->output_path);
-				char* last_slash = strrchr(link_filename, '/');
-				const char* final_link = last_slash ? last_slash + 1 : link_filename;
-
-				add_to_context(card_context, "card_item_title", title_no_ext);
-				add_to_context(card_context, "card_item_link", final_link);
-				add_to_context(card_context, "card_item_content", "내용 예시");
-
-				char* rendered_card = render_template("templates/components/card.html", card_context);
-				buffer_append_formatted(post_list_buffer, "%s", rendered_card);
-
-				free(rendered_card);
-				free(title_no_ext);
-				free(link_filename);
-				free_template_context(card_context);
+				post_count++;
 			}
 		}
+
+		PostSortInfo* sort_array = malloc(post_count * sizeof(PostSortInfo));
+		int current_index = 0;
+		list_for_each_entry(child, &node->children, sibling) {
+			if (!child->is_directory && strstr(child->name, ".md") && !is_ignored(child->full_path)) {
+				sort_array[current_index].node = child;
+				char full_input_path[MAX_PATH_LENGTH];
+				snprintf(full_input_path, sizeof(full_input_path), "%s/%s", vault_path, child->full_path);
+				extract_sort_info(full_input_path, &sort_array[current_index]);
+				current_index++;
+			}
+		}
+
+		qsort(sort_array, post_count, sizeof(PostSortInfo), compare_posts);
+
+		char* card_template_str = read_file_into_string("templates/components/card.html");
+		DynamicBuffer* post_list_buffer = create_dynamic_buffer(1024);
+
+		for (int i = 0; i < post_count; i++) {
+			NavNode* sorted_child = sort_array[i].node;
+			TemplateContext* card_context = create_template_context();
+			char* title_no_ext = strdup(sorted_child->name);
+			char* dot = strrchr(title_no_ext, '.');
+			if (dot) *dot = '\0';
+
+			char* link_filename = strdup(sorted_child->output_path);
+			char* last_slash = strrchr(link_filename, '/');
+			const char* final_link = last_slash ? last_slash + 1 : link_filename;
+
+			add_to_context(card_context, "card_item_title", title_no_ext);
+			add_to_context(card_context, "card_item_link", final_link);
+			add_to_context(card_context, "card_item_content", "내용 예시");
+
+			char* rendered_card = render_template("templates/components/card.html", card_context);
+			buffer_append_formatted(post_list_buffer, "%s", rendered_card);
+
+			free(rendered_card);
+			free(title_no_ext);
+			free(link_filename);
+			free_template_context(card_context);
+		}
+		for (int i = 0; i < post_count; i++) {
+			free(sort_array[i].date);
+		}
+		free(sort_array);
+
 		if (card_template_str) free(card_template_str);
 		char* post_list_html = destroy_buffer_and_get_content(post_list_buffer);
 
