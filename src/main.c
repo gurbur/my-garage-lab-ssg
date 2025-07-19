@@ -234,7 +234,7 @@ void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_
 	char* content_html_partial = generate_html_from_ast(ast_root, t_context);
 	add_to_context(t_context, "post_content", content_html_partial);
 
-	generate_breadcrumb_html(current_node, t_context);
+	generate_breadcrumb_html(current_node, t_context, s_context);
 
 	if (get_from_context(t_context, "title") == NULL) {
 		char* title_no_ext = strdup(current_node->name);
@@ -348,7 +348,7 @@ void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* 
 		TemplateContext* page_context = create_template_context();
 		copy_context(page_context, global_context);
 
-		generate_breadcrumb_html(node, page_context);
+		generate_breadcrumb_html(node, page_context, s_context);
 		add_to_context(page_context, "list_title", strlen(node->name) > 0 ? node->name : "Home");
 		add_to_context(page_context, "title", strlen(node->name) > 0 ? node->name : "Home");
 

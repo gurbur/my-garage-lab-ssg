@@ -11,7 +11,7 @@
 
 #define MAX_PATH_LENGTH 1024
 
-static void scan_recursively(NavNode* parent, HashTable* fast_lookup, const char* base_path, const char*current_subpath);
+static void scan_recursively(NavNode* parent, HashTable* fast_lookup, const char* base_path, const char* current_subpath);
 static void build_sidebar_html_recursively(NavNode* node, DynamicBuffer* buffer, const char* base_url);
 
 static NavNode* create_nav_node(const char* name, const char* path, bool is_dir) {
@@ -123,22 +123,48 @@ void generate_sidebar_html(SiteContext* s_context, TemplateContext* global_conte
 	free(sidebar_html);
 }
 
-void generate_breadcrumb_html(NavNode* current_node, TemplateContext* local_context) {
+void generate_breadcrumb_html(NavNode* current_node, TemplateContext* local_context, SiteContext* s_context) {
+	const char* base_url = get_from_context(local_context, "base_url");
+	if (!base_url) base_url = "";
+
 	DynamicBuffer* buffer = create_dynamic_buffer(256);
-	buffer_append_formatted(buffer, "<a href=\"/\">Home</a>");
+	buffer_append_formatted(buffer, "<a href=\"%s/\">Home</a>", base_url);
 
 	char* path_copy = strdup(current_node->full_path);
 	char* token = strtok(path_copy, "/");
 
+	DynamicBuffer* current_path_buffer = create_dynamic_buffer(256);
+
 	while(token != NULL) {
-		char* dot = strrchr(token, '.');
+		if (current_path_buffer->length > 0) {
+			buffer_append_formatted(current_path_buffer, "/");
+		}
+		buffer_append_formatted(current_path_buffer, "%s", token);
+
+		char* display_name = strdup(token);
+		char* dot = strrchr(display_name, '.');
 		if (dot && strcmp(dot, ".md") == 0) {
 			*dot = '\0';
 		}
-		buffer_append_formatted(buffer, " &gt; %s", token);
+
+		NavNode* node = ht_get(s_context->fast_lookup, current_path_buffer->content);
+
+		if (node && node->is_directory) {
+			buffer_append_formatted(buffer, " &gt; <a href=\"%s/%s/index.html\">%s</a>", base_url, current_path_buffer->content, display_name);
+		} else {
+			char output_path[MAX_PATH_LENGTH];
+			snprintf(output_path, sizeof(output_path), "%s", current_path_buffer->content);
+			char* md_dot = strrchr(output_path, '.');
+			if (md_dot && strcmp(md_dot, ".md") == 0) {
+				strcpy(md_dot, ".html");
+			}
+			buffer_append_formatted(buffer, " &gt; <a href=\"%s/%s\">%s</a>", base_url, output_path, display_name);
+		}
+		free(display_name);
 		token = strtok(NULL, "/");
 	}
 	free(path_copy);
+	destroy_buffer_and_get_content(current_path_buffer);
 	char* breadcrumb_html = destroy_buffer_and_get_content(buffer);
 	add_to_context(local_context, "breadcrumb", breadcrumb_html);
 	free(breadcrumb_html);
