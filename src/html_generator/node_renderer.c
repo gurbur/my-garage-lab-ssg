@@ -2,6 +2,26 @@
 
 #include "node_renderer.h"
 
+static void append_escaped_html(DynamicBuffer* buffer, const char* text) {
+	if (!text) return;
+	for (size_t i = 0; i < strlen(text); i++) {
+		switch (text[i]) {
+			case '<':
+				buffer_append_formatted(buffer, "&lt;");
+				break;
+			case '>':
+				buffer_append_formatted(buffer, "&gt;");
+				break;
+			case '&':
+				buffer_append_formatted(buffer, "&amp;");
+				break;
+			default:
+				buffer_append_formatted(buffer, "%c", text[i]);
+				break;
+		}
+	}
+}
+
 void render_opening_tag_for_node(const AstNode* node, DynamicBuffer* buffer) {
 	switch (node->type) {
 		case NODE_HEADING1:         buffer_append_formatted(buffer, "<h1>%s", node->data1); break;
@@ -17,7 +37,7 @@ void render_opening_tag_for_node(const AstNode* node, DynamicBuffer* buffer) {
 			} else {
 				buffer_append_formatted(buffer, "<pre><code>");
 			}
-			if (node->data1) buffer_append_formatted(buffer, "%s", node->data1);
+			append_escaped_html(buffer, node->data1);
 			break;
 		default: break;
 	}
@@ -43,7 +63,11 @@ void render_inline_node(const AstNode* node, DynamicBuffer* buffer, TemplateCont
 		case NODE_ITALIC:           buffer_append_formatted(buffer, "<em>%s</em>", node->data1); break;
 		case NODE_BOLD:             buffer_append_formatted(buffer, "<strong>%s</strong>", node->data1); break;
 		case NODE_ITALIC_AND_BOLD:  buffer_append_formatted(buffer, "<em><strong>%s</strong></em>", node->data1); break;
-		case NODE_CODE:             buffer_append_formatted(buffer, "<code>%s</code>", node->data1); break;
+		case NODE_CODE:
+			buffer_append_formatted(buffer, "<code>");
+			append_escaped_html(buffer, node->data1);
+			buffer_append_formatted(buffer, "</code>");
+			break;
 		case NODE_LINK: {
 			const char* url = node->data2;
 			const char* base_url = get_from_context(context, "base_url");
