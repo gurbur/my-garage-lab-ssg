@@ -26,6 +26,7 @@ int main(int argc, char *argv[]) {
 	const char* input_filename = argv[1];
 
 	SiteContext* s_context = create_site_context(".");
+	TemplateContext* t_context = create_template_context();
 
 	FILE* test_file = fopen(input_filename, "r");
 	if (!test_file) {
@@ -45,10 +46,9 @@ int main(int argc, char *argv[]) {
 	LIST_HEAD(token_list);
 	tokenize_string(content_md, &token_list);
 	free(content_md);
-
 	AstNode* ast_root = parse_tokens(&token_list, s_context, input_filename);
 
-	char* html_output = generate_html_from_ast(ast_root);
+	char* html_output = generate_html_from_ast(ast_root, t_context);
 
 	if (html_output) {
 		printf("%s", html_output);
@@ -58,6 +58,7 @@ int main(int argc, char *argv[]) {
 	free_ast(ast_root);
 	free_token_list(&token_list);
 	free_site_context(s_context);
+	free_template_context(t_context);
 
 	return EXIT_SUCCESS;
 }
