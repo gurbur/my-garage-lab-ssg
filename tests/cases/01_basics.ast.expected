@@ -17,4 +17,5 @@
 	-> LINE
 	-> HEADING3 | data1: "작은 제목 (H3)"
 	-> PARAGRAPH
-		-> TEXT | data1: "수평선 위아래로 다른 내용이 올 수 있습니다. "
+		-> TEXT | data1: "수평선 위아래로 다른 내용이 올 수 있습니다."
+		-> SOFT_BREAK

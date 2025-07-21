@@ -2,6 +2,7 @@
 	"site_title": "My Garage Lab",
 	"author": "Jihwan Kim",
 	"base_url": "https://gurbur.github.io/my-garage-lab",
+	"hard_line_breaks": "false",
 	"social": {
 		"github": "https://github.com/gurbur",
 		"email": "jihwan7577@gmail.com"

@@ -36,6 +36,7 @@ static const char* ast_node_type_to_string(AstNodeType type) {
 		case NODE_ITALIC_AND_BOLD: return "ITALIC_AND_BOLD";
 		case NODE_CODE: return "CODE";
 		case NODE_LINK: return "LINK";
+		case NODE_SOFT_BREAK: return "SOFT_BREAK";
 		default: return "UNKNOWN";
 	}
 }

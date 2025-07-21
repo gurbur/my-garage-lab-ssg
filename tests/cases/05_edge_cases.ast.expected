@@ -1,20 +1,35 @@
 -> DOCUMENT
 	-> HEADING1 | data1: "엣지 케이스 테스트"
 	-> PARAGRAPH
-		-> TEXT | data1: "리스트 항목 안에 코드 블럭이 포함된 경우: - 첫 번째 항목 - 두 번째 항목     "
+		-> TEXT | data1: "리스트 항목 안에 코드 블럭이 포함된 경우:"
+		-> SOFT_BREAK
+		-> TEXT | data1: "- 첫 번째 항목"
+		-> SOFT_BREAK
+		-> TEXT | data1: "- 두 번째 항목"
+		-> SOFT_BREAK
+		-> TEXT | data1: "    "
 		-> CODE | data1: ""
-		-> TEXT | data1: "`c     // 리스트 항목 안의 코드 블록
+		-> TEXT | data1: "`c"
+		-> SOFT_BREAK
+		-> TEXT | data1: "    // 리스트 항목 안의 코드 블록
     for (int i = 0; i < 5; i++) {
         //...
     }
     "
 		-> CODE | data1: ""
-		-> TEXT | data1: "` - 세 번째 항목"
+		-> TEXT | data1: "`"
+		-> SOFT_BREAK
+		-> TEXT | data1: "- 세 번째 항목"
 	-> UNORDERED_LIST
 		-> LIST_ITEM
 			-> TEXT | data1: " "
 			-> ITALIC | data1: " "
 	-> PARAGRAPH
-		-> TEXT | data1: "수평선처럼 보이지만, 뒤에 글자가 와서 수평선이 아닌 경우: --- 이것은 수평선이 아닙니다."
+		-> TEXT | data1: "수평선처럼 보이지만, 뒤에 글자가 와서 수평선이 아닌 경우:"
+		-> SOFT_BREAK
+		-> TEXT | data1: "--- 이것은 수평선이 아닙니다."
 	-> PARAGRAPH
-		-> TEXT | data1: "잘못된 강조 구문: *이탤릭이 **볼드가 닫히지 않았습니다. "
+		-> TEXT | data1: "잘못된 강조 구문: *이탤릭이"
+		-> SOFT_BREAK
+		-> TEXT | data1: "**볼드가 닫히지 않았습니다."
+		-> SOFT_BREAK

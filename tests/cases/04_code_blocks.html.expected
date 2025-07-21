@@ -1,5 +1,5 @@
 <p>먼저 언어 타입이 지정된 C 코드 블록입니다.</p>
-<pre><code class="language-c">#include <stdio.h>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
 
 // main function
 int main() {
