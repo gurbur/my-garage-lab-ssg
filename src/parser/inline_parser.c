@@ -219,13 +219,19 @@ static AstNode* parse_obsidian_link(ParserState* state, bool is_image) {
 	if (match_token(state, TOKEN_RBRACKET) && match_token(state, TOKEN_RBRACKET)) {
 		AstNode* link_node = NULL;
 		char* link_text = strdup(filename_buffer->content);
+		char* link_target = filename_buffer->content;
+		NavNode* target_node = NULL;
 
-		NavNode* target_node = (NavNode*)ht_get(state->s_context->fast_lookup, filename_buffer->content);
+		target_node = (NavNode*)ht_get(state->s_context->fast_lookup_by_path, link_target);
+
+		if (!target_node) {
+			target_node = (NavNode*)ht_get(state->s_context->fast_lookup_by_name, link_target);
+		}
 
 		if (!target_node) {
 			char lookup_key_with_ext[MAX_PATH_LENGTH];
-			snprintf(lookup_key_with_ext, sizeof(lookup_key_with_ext), "%s.md", filename_buffer->content);
-			target_node = (NavNode*)ht_get(state->s_context->fast_lookup, lookup_key_with_ext);
+			snprintf(lookup_key_with_ext, sizeof(lookup_key_with_ext), "%s.md", link_target);
+			target_node = (NavNode*)ht_get(state->s_context->fast_lookup_by_name, lookup_key_with_ext);
 		}
 
 		if (target_node) {
@@ -238,7 +244,7 @@ static AstNode* parse_obsidian_link(ParserState* state, bool is_image) {
 					);
 			free(relative_path);
 		} else {
-			fprintf(stderr, "Warning: Link target not found for '[[%s]]'\n", filename_buffer->content);
+			fprintf(stderr, "Warning: Link target not found for '[[%s]]'\n", link_target);
 			link_node = create_ast_node(NODE_LINK, link_text, "#");
 		}
 
@@ -246,8 +252,7 @@ static AstNode* parse_obsidian_link(ParserState* state, bool is_image) {
 		free(link_text);
 		return link_node;
 	}
-	char* temp_content = destroy_buffer_and_get_content(filename_buffer);
-	free(temp_content);
+	destroy_buffer_and_get_content(filename_buffer);
 	state->current_node = start_pos;
 	return NULL;
 }

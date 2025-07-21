@@ -16,7 +16,8 @@ typedef struct NavNode {
 
 typedef struct {
 	NavNode* root;
-	HashTable* fast_lookup;
+	HashTable* fast_lookup_by_name;
+	HashTable* fast_lookup_by_path;
 } SiteContext;
 
 SiteContext* create_site_context(const char* vault_path);

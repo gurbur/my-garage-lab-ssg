@@ -11,7 +11,7 @@
 
 #define MAX_PATH_LENGTH 1024
 
-static void scan_recursively(NavNode* parent, HashTable* fast_lookup, const char* base_path, const char* current_subpath);
+static void scan_recursively(NavNode* parent, HashTable* name_lookup, HashTable* path_lookup, const char* base_path, const char* current_subpath);
 static void build_sidebar_html_recursively(NavNode* node, DynamicBuffer* buffer, const char* base_url);
 
 static NavNode* create_nav_node(const char* name, const char* path, bool is_dir) {
@@ -56,9 +56,10 @@ SiteContext* create_site_context(const char* vault_path) {
 	if (!context) return NULL;
 
 	context->root = create_nav_node("Home", "", true);
-	context->fast_lookup = ht_create(512);
+	context->fast_lookup_by_name = ht_create(512);
+	context->fast_lookup_by_path = ht_create(512);
 
-	scan_recursively(context->root, context->fast_lookup, vault_path, "");
+	scan_recursively(context->root, context->fast_lookup_by_name, context->fast_lookup_by_path, vault_path, "");
 
 	return context;
 }
@@ -66,11 +67,12 @@ SiteContext* create_site_context(const char* vault_path) {
 void free_site_context(SiteContext* context) {
 	if (!context) return;
 	free_nav_node_recursively(context->root);
-	ht_destroy(context->fast_lookup, NULL);
+	ht_destroy(context->fast_lookup_by_name, NULL);
+	ht_destroy(context->fast_lookup_by_path, NULL);
 	free(context);
 }
 
-static void scan_recursively(NavNode* parent, HashTable* fast_lookup, const char* base_path, const char* current_subpath) {
+static void scan_recursively(NavNode* parent, HashTable* name_lookup, HashTable* path_lookup, const char* base_path, const char* current_subpath) {
 	char current_full_path[MAX_PATH_LENGTH];
 	snprintf(current_full_path, sizeof(current_full_path), "%s/%s", base_path, current_subpath);
 
@@ -97,13 +99,13 @@ static void scan_recursively(NavNode* parent, HashTable* fast_lookup, const char
 
 		bool is_dir = S_ISDIR(entry_stat.st_mode);
 		NavNode* new_node = create_nav_node(entry->d_name, entry_relative_path, is_dir);
-
 		list_add_tail(&new_node->sibling, &parent->children);
 
-		ht_set(fast_lookup, new_node->name, new_node);
+		ht_set(name_lookup, new_node->name, new_node);
+		ht_set(path_lookup, new_node->full_path, new_node);
 
 		if (is_dir) {
-			scan_recursively(new_node, fast_lookup, base_path, entry_relative_path);
+			scan_recursively(new_node, name_lookup, path_lookup, base_path, entry_relative_path);
 		}
 	}
 	closedir(dir);
@@ -141,16 +143,18 @@ void generate_breadcrumb_html(NavNode* current_node, TemplateContext* local_cont
 		}
 		buffer_append_formatted(current_path_buffer, "%s", token);
 
+		NavNode* node = ht_get(s_context->fast_lookup_by_path, current_path_buffer->content);
+
 		char* display_name = strdup(token);
 		char* dot = strrchr(display_name, '.');
 		if (dot && strcmp(dot, ".md") == 0) {
 			*dot = '\0';
 		}
 
-		NavNode* node = ht_get(s_context->fast_lookup, current_path_buffer->content);
-
 		if (node && node->is_directory) {
 			buffer_append_formatted(buffer, " &gt; <a href=\"%s/%s/index.html\">%s</a>", base_url, current_path_buffer->content, display_name);
+		} else if (node) {
+			buffer_append_formatted(buffer, "&gt; <a href=\"%s/%s\">%s</a>", base_url, node->output_path, display_name);
 		} else {
 			char output_path[MAX_PATH_LENGTH];
 			snprintf(output_path, sizeof(output_path), "%s", current_path_buffer->content);
