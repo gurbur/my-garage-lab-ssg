@@ -26,6 +26,26 @@ typedef struct {
 	bool has_order;
 } PostSortInfo;
 
+static void mkdir_p(const char* path) {
+	char tmp[MAX_PATH_LENGTH];
+	char *p = NULL;
+	size_t len;
+
+	snprintf(tmp, sizeof(tmp), "%s", path);
+	len = strlen(tmp);
+	if(len > 0 && tmp[len - 1] == '/') {
+		tmp[len - 1] = 0;
+	}
+	for(p = tmp + 1; *p; p++) {
+		if (*p == '/') {
+			*p = 0;
+			mkdir(tmp, 0755);
+			*p = '/';
+		}
+	}
+	mkdir(tmp, 0755);
+}
+
 int compare_posts(const void* a, const void* b) {
 	const PostSortInfo* postA = (const PostSortInfo*)a;
 	const PostSortInfo* postB = (const PostSortInfo*)b;
@@ -134,39 +154,27 @@ static char* parse_front_matter(FILE* file, TemplateContext* context) {
 	return destroy_buffer_and_get_content(db);
 }
 
-static void create_directories_recursively(const char* path) {
-	char tmp[MAX_PATH_LENGTH];
-	char *p = NULL;
-	size_t len;
+static void create_parent_directories(const char* file_path) {
+	char parent_dir[MAX_PATH_LENGTH];
+	strncpy(parent_dir, file_path, sizeof(parent_dir) - 1);
+	parent_dir[sizeof(parent_dir) - 1] = '\0';
 
-	snprintf(tmp, sizeof(tmp), "%s", path);
-	len = strlen(tmp);
-
-	if (tmp[len - 1] == '/') tmp[len - 1] = 0;
-
-	char* last_slash = strrchr(tmp, '/');
+	char* last_slash = strrchr(parent_dir, '/');
 	if (last_slash) {
 		*last_slash = '\0';
-	} else {
-		return;
+		mkdir_p(parent_dir);
 	}
-
-	for (p = tmp; *p; p++) {
-		if (*p == '/') {
-			*p = 0;
-			mkdir(tmp, 0755);
-			*p = '/';
-		}
-	}
-	mkdir(tmp, 0755);
 }
 
 void copy_static_files(const char* src_dir, const char* dest_dir) {
 	printf("Copying static files from %s to %s...\n", src_dir, dest_dir);
-	create_directories_recursively(dest_dir);
+	mkdir_p(dest_dir);
 
 	DIR* dir = opendir(src_dir);
-	if (!dir) return;
+	if (!dir) {
+		fprintf(stderr, "[ERROR] Cannot open source directory: %s\n", src_dir);
+		return;
+	}
 
 	struct dirent* entry;
 	while ((entry = readdir(dir)) != NULL) {
@@ -183,6 +191,7 @@ void copy_static_files(const char* src_dir, const char* dest_dir) {
 		if (S_ISDIR(path_stat.st_mode)) {
 			copy_static_files(src_path, dest_path);
 		} else {
+			printf("[DEBUG] Copying file: %s\n", src_path);
 			FILE* src_file = fopen(src_path, "rb");
 			FILE* dest_file = fopen(dest_path, "wb");
 			if (src_file && dest_file) {
@@ -193,6 +202,9 @@ void copy_static_files(const char* src_dir, const char* dest_dir) {
 				}
 				fclose(src_file);
 				fclose(dest_file);
+			} else {
+				if (!src_file) fprintf(stderr, "[ERROR] Failed to open source file: %s\n", src_path);
+				if (!dest_file) fprintf(stderr, "[ERROR] Failed to open destination file: %s\n", dest_path);
 			}
 		}
 	}
@@ -258,7 +270,7 @@ void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_
 		char full_output_path[MAX_PATH_LENGTH];
 		snprintf(full_output_path, sizeof(full_output_path), "ssg_output/%s", current_node->output_path);
 
-		create_directories_recursively(full_output_path);
+		create_parent_directories(full_output_path);
 
 		FILE* out_file = fopen(full_output_path, "w");
 		if (out_file) {
@@ -285,9 +297,17 @@ void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* 
 	}
 
 	if (node->is_directory) {
+		const char* static_dir = get_from_context(global_context, "build.static_dir");
+		const char* image_dir = get_from_context(global_context, "build.image_dir");
+
+		if ((static_dir && strcmp(node->name, static_dir) == 0) || (image_dir && strcmp(node->name, image_dir) == 0)) {
+			printf("[SKIP] Skipping index generation for static/image directory: %s\n", node->full_path);
+			return;
+		}
+
 		printf("[DIR] Generating index for: %s\n", node->full_path);
 
-		create_directories_recursively(node->output_path);
+		create_parent_directories(node->output_path);
 
 		int post_count = 0;
 		NavNode* child;
@@ -363,7 +383,7 @@ void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* 
 			snprintf(output_path, sizeof(output_path), "ssg_output/index.html");
 		} else {
 			snprintf(output_path, sizeof(output_path), "ssg_output/%s/index.html", node->full_path);
-			create_directories_recursively(output_path);
+			create_parent_directories(output_path);
 		}
 
 		FILE* out_file = fopen(output_path, "w");
@@ -403,6 +423,13 @@ int main(int argc, char *argv[]) {
 	TemplateContext* global_context = create_template_context();
 	load_config("config.json", global_context);
 
+	const char* loaded_title = get_from_context(global_context, "site_title");
+	const char* loaded_static_dir = get_from_context(global_context, "build.static_dir");
+	const char* loaded_image_dir = get_from_context(global_context, "build.image_dir");
+	printf("[DEBUG] Loaded site_title: %s\n", loaded_title ? loaded_title : "Not Found");
+	printf("[DEBUG] Loaded build.static_dir: %s\n", loaded_static_dir ? loaded_static_dir : "Not Found");
+	printf("[DEBUG] Loaded build.image_dir: %s\n", loaded_image_dir? loaded_image_dir : "Not Found");
+
 	printf("[STEP 2] Scanning vault and creating site context...\n");
 	SiteContext* site_context = create_site_context(vault_path);
 
@@ -420,14 +447,26 @@ int main(int argc, char *argv[]) {
 	printf("---- SITE GENERATION FINISHED ----\n\n");
 
 	printf("[STEP 6] Copying static files...\n");
-	const char* static_dir = get_from_context(global_context, "static_dir");
-	if (static_dir) {
+	const char* static_dir = get_from_context(global_context, "build.static_dir");
+	if (static_dir && strlen(static_dir) > 0) {
 		char dest_static_path[MAX_PATH_LENGTH];
 		snprintf(dest_static_path, sizeof(dest_static_path), "%s/%s", output_dir, static_dir);
 		copy_static_files(static_dir, dest_static_path);
+	} else {
+		printf("[INFO] 'build.static_dir' not found in config.json, skipping.\n");
 	}
 
-	printf("[STEP 7] Cleaning up...\n");
+	printf("[STEP 7] Copying image files...\n");
+	const char* image_dir = get_from_context(global_context, "build.image_dir");
+	if (image_dir && strlen(image_dir) > 0) {
+		char dest_image_path[MAX_PATH_LENGTH];
+		snprintf(dest_image_path, sizeof(dest_image_path), "%s/%s", output_dir, image_dir);
+		copy_static_files(image_dir, dest_image_path);
+	} else {
+		printf("[INFO] 'build.image_dir' not found in config.json, skipping.\n");
+	}
+
+	printf("[STEP 8] Cleaning up...\n");
 	free_site_context(site_context);
 	free_template_context(global_context);
 	free_ignore_patterns();

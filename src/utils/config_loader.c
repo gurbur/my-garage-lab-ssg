@@ -1,10 +1,29 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "../libs/cjson/cJSON.h"
 #include "../include/config_loader.h"
 
 char* read_file_into_string(const char* filepath);
+
+static void populate_context_from_json(TemplateContext* context, cJSON* json_node, const char* prefix) {
+	cJSON* item = NULL;
+	cJSON_ArrayForEach(item, json_node) {
+		char new_key[256];
+		if (strlen(prefix) > 0) {
+			snprintf(new_key, sizeof(new_key), "%s.%s", prefix, item->string);
+		} else {
+			snprintf(new_key, sizeof(new_key), "%s", item->string);
+		}
+
+		if (cJSON_IsString(item)) {
+			add_to_context(context, new_key, item->valuestring);
+		} else if (cJSON_IsObject(item)) {
+			populate_context_from_json(context, item, new_key);
+		}
+	}
+}
 
 void load_config(const char* config_path, TemplateContext* context) {
 	char* config_string = read_file_into_string(config_path);
@@ -25,12 +44,7 @@ void load_config(const char* config_path, TemplateContext* context) {
 		return;
 	}
 
-	cJSON *item = NULL;
-	cJSON_ArrayForEach(item, config_json) {
-		if (cJSON_IsString(item) && (item->valuestring != NULL)) {
-			add_to_context(context, item->string, item->valuestring);
-		}
-	}
+	populate_context_from_json(context, config_json, "");
 
 	cJSON_Delete(config_json);
 }
