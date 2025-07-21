@@ -14,6 +14,7 @@ static bool is_inline_node(const AstNode* node) {
 		case NODE_CODE:
 		case NODE_LINK:
 		case NODE_IMAGE_LINK:
+		case NODE_SOFT_BREAK:
 			return true;
 		default:
 			return false;

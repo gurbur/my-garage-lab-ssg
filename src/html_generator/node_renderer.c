@@ -92,6 +92,16 @@ void render_inline_node(const AstNode* node, DynamicBuffer* buffer, TemplateCont
 			}
 			break;
 		}
+		case NODE_SOFT_BREAK: {
+			const char* hard_breaks = get_from_context(context, "hard_line_breaks");
+
+			if (hard_breaks && strcmp(hard_breaks, "true") == 0) {
+				buffer_append_formatted(buffer, "<br>\n");
+			} else {
+				buffer_append_formatted(buffer, " ");
+			}
+			break;
+		}
 		default: break;
 	}
 }

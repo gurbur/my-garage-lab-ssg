@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include "inline_parser.h"
 #include "../include/dynamic_buffer.h"
 
@@ -24,6 +25,16 @@ void parse_inline_elements(ParserState* state, AstNode* parent_node, bool is_lis
 				if (t2 && t2->type == TOKEN_NEWLINE) {
 					break;
 				}
+				consume_token(state);
+
+				if (text_buffer->length > 0) {
+					add_child_node(parent_node, create_ast_node(NODE_TEXT, text_buffer->content, NULL));
+					text_buffer->length = 0;
+					text_buffer->content[0] = '\0';
+				}
+
+				add_child_node(parent_node, create_ast_node(NODE_SOFT_BREAK, NULL, NULL));
+				continue;
 			}
 		}
 
@@ -48,11 +59,7 @@ void parse_inline_elements(ParserState* state, AstNode* parent_node, bool is_lis
 		}
 
 		Token* current_token = consume_token(state);
-		if (current_token->type == TOKEN_NEWLINE) {
-			buffer_append_formatted(text_buffer, "<br>");
-		} else {
-			buffer_append_formatted(text_buffer, "%s", token_to_string(current_token));
-		}
+		buffer_append_formatted(text_buffer, "%s", token_to_string(current_token));
 	}
 	if (text_buffer->length > 0) {
 		add_child_node(parent_node, create_ast_node(NODE_TEXT, text_buffer->content, NULL));
