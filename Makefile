@@ -4,15 +4,22 @@ CFLAGS = -g -Wall -Isrc/include -Isrc/libs/cjson
 BUILD_DIR = builds
 OBJ_DIR = $(BUILD_DIR)/obj
 
-SRC_DIRS = src src/libs/cjson src/tokenizer src/parser src/html_generator src/template_engine src/utils tests/src
+SRC_DIRS = src src/libs/cjson src/tokenizer src/parser src/html_generator src/template_engine src/utils tests/src src/builder
 VPATH = $(SRC_DIRS)
 
-LIB_SRCS = cJSON.c config_loader.c ignore_handler.c \
-           dynamic_buffer.c hash_table.c site_context.c \
-					 token_handlers.c tokenizer.c \
-					 parser_utils.c inline_parser.c block_parser.c parser.c \
-					 html_generator.c node_renderer.c \
-					 template_engine.c context_manager.c template_utils.c
+LIB_SRCS = \
+          build_process.c \
+					site_context.c \
+          token_handlers.c tokenizer.c \
+          parser_utils.c inline_parser.c block_parser.c parser.c \
+          html_generator.c node_renderer.c \
+          template_engine.c context_manager.c template_utils.c \
+          dynamic_buffer.c \
+          hash_table.c \
+          file_utils.c \
+          config_loader.c \
+          ignore_handler.c \
+          cJSON.c
 
 LIB_OBJS = $(addprefix $(OBJ_DIR)/, $(LIB_SRCS:.c=.o))
 
