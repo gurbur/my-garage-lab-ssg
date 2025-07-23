@@ -51,7 +51,7 @@ HashTable* load_cache() {
 	char* content_copy = strdup(content);
 	char* line = strtok(content_copy, "\n");
 	while (line != NULL) {
-		char* delimiter = strrchr(line, ':');
+		char* delimiter = strrchr(line, '\t');
 		if (delimiter) {
 			*delimiter = '\0';
 			char* key = line;
@@ -86,7 +86,7 @@ void save_cache(const HashTable* cache) {
 	for (int i = 0; i < cache->size; ++i) {
 		HashEntry* entry = cache->entries[i];
 		while (entry) {
-			fprintf(file, "%s:%s\n", entry->key, (char*)entry->value);
+			fprintf(file, "%s\t%s\n", entry->key, (char*)entry->value);
 			entry = entry->next;
 		}
 	}

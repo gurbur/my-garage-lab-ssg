@@ -86,7 +86,25 @@ int main(int argc, char *argv[]) {
 		printf("[INFO] 'build.image_dir' not found in config.json, skipping.\n");
 	}
 
-	printf("[STEP 9] Cleaning up and saving cache...\n");
+	printf("[STEP 9] Pruning stale files...\n");
+	for (size_t i = 0; i < old_cache->size; ++i) {
+		HashEntry* entry = old_cache->entries[i];
+		while (entry) {
+			if (ht_get(new_cache, entry->key) == NULL) {
+				char* value_str = (char*)entry->value;
+				char* delimiter = strrchr(value_str, ':');
+				if (delimiter) {
+					char* file_to_delete = delimiter + 1;
+					if (remove(file_to_delete) == 0) {
+						printf(" - Removed stale file: %s\n", file_to_delete);
+					}
+				}
+			}
+			entry = entry->next;
+		}
+	}
+
+	printf("[STEP 10] Cleaning up and saving cache...\n");
 	save_cache(new_cache);
 	ht_destroy(old_cache, free);
 	ht_destroy(new_cache, free);

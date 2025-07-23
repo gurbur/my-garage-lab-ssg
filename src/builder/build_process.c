@@ -251,13 +251,30 @@ void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_
 	snprintf(full_input_path, sizeof(full_input_path), "%s/%s", vault_path, current_node->full_path);
 
 	char* current_hash = generate_file_hash(full_input_path);
-	char* old_hash = old_cache ? (char*)ht_get(old_cache, full_input_path) : NULL;
+	char* old_cache_value = old_cache ? (char*)ht_get(old_cache, full_input_path) : NULL;
 
-	if (current_hash && old_hash && strcmp(current_hash, old_hash) == 0) {
-		printf("Skipping (cached): %s\n", current_node->full_path);
-		ht_set(new_cache, strdup(full_input_path), strdup(current_hash));
-		free(current_hash);
-		return;
+	if (old_cache_value) {
+		char* old_hash_only = strdup(old_cache_value);
+		char* delimiter = strrchr(old_hash_only, ':');
+		if (delimiter) *delimiter = '\0';
+
+		if (current_hash && strcmp(current_hash, old_hash_only) == 0) {
+			char* output_path_from_cache = strrchr(old_cache_value, ':');
+			if (output_path_from_cache) {
+				output_path_from_cache++;
+			}
+
+			if (output_path_from_cache && check_path_type(output_path_from_cache) == 1) {
+				printf("Skipping (cached): %s\n", current_node->full_path);
+				ht_set(new_cache, strdup(full_input_path), strdup(old_cache_value));
+				free(old_hash_only);
+				free(current_hash);
+				return;
+			} else {
+				printf("Rebuilding (output missing): %s\n", current_node->full_path);
+			}
+		}
+		free(old_hash_only);
 	}
 
 	printf("Building: %s\n", current_node->full_path);
@@ -312,8 +329,10 @@ void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_
 	char* final_html = render_template("templates/layout/base.html", t_context);
 
 	if (final_html) {
+		const char* output_dir = get_from_context(global_context, "build.output_dir");
+		if (!output_dir) output_dir = "ssg_output";
 		char full_output_path[MAX_PATH_LENGTH];
-		snprintf(full_output_path, sizeof(full_output_path), "ssg_output/%s", current_node->output_path);
+		snprintf(full_output_path, sizeof(full_output_path), "%s/%s", output_dir, current_node->output_path);
 
 		create_parent_directories(full_output_path);
 
@@ -327,7 +346,10 @@ void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_
 		}
 
 		if (current_hash) {
-			ht_set(new_cache, strdup(full_input_path), strdup(current_hash));
+			DynamicBuffer* db = create_dynamic_buffer(0);
+			buffer_append_formatted(db, "%s:%s", current_hash, full_output_path);
+			char* cache_value_str = destroy_buffer_and_get_content(db);
+			ht_set(new_cache, strdup(full_input_path), cache_value_str);
 		}
 	}
 
