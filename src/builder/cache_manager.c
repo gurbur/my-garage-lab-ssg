@@ -51,7 +51,7 @@ HashTable* load_cache() {
 	char* content_copy = strdup(content);
 	char* line = strtok(content_copy, "\n");
 	while (line != NULL) {
-		char* delimiter = strchr(line, ':');
+		char* delimiter = strrchr(line, ':');
 		if (delimiter) {
 			*delimiter = '\0';
 			char* key = line;
