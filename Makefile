@@ -1,10 +1,13 @@
 CC = gcc
-CFLAGS = -g -Wall -Isrc/include -Isrc/libs/cjson
+CFLAGS = -g -Wall -Isrc/include -Isrc/libs/cjson -Isrc/libs/sha256
 
 BUILD_DIR = builds
 OBJ_DIR = $(BUILD_DIR)/obj
 
-SRC_DIRS = src src/libs/cjson src/libs/sha256 src/tokenizer src/parser src/html_generator src/template_engine src/utils tests/src src/builder
+SRC_DIRS = src \
+					 src/libs/cjson src/libs/sha256 \
+					 src/utils tests/src src/builder \
+					 src/tokenizer src/parser src/html_generator src/template_engine \
 
 VPATH = $(SRC_DIRS)
 
