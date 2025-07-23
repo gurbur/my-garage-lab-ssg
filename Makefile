@@ -4,7 +4,8 @@ CFLAGS = -g -Wall -Isrc/include -Isrc/libs/cjson
 BUILD_DIR = builds
 OBJ_DIR = $(BUILD_DIR)/obj
 
-SRC_DIRS = src src/libs/cjson src/tokenizer src/parser src/html_generator src/template_engine src/utils tests/src src/builder
+SRC_DIRS = src src/libs/cjson src/libs/sha256 src/tokenizer src/parser src/html_generator src/template_engine src/utils tests/src src/builder
+
 VPATH = $(SRC_DIRS)
 
 LIB_SRCS = \
@@ -19,7 +20,7 @@ LIB_SRCS = \
           file_utils.c \
           config_loader.c \
           ignore_handler.c \
-          cJSON.c
+          cJSON.c sha256.c
 
 LIB_OBJS = $(addprefix $(OBJ_DIR)/, $(LIB_SRCS:.c=.o))
 
