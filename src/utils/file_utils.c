@@ -3,6 +3,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <errno.h>
 
 #include "../include/file_utils.h"
 
@@ -23,7 +24,7 @@ char* read_file_into_string(const char* filepath) {
 	return buffer;
 }
 
-void mkdir_p(const char* path) {
+int mkdir_p(const char* path) {
 	char tmp[MAX_PATH_LENGTH];
 	char *p = NULL;
 	size_t len;
@@ -33,14 +34,30 @@ void mkdir_p(const char* path) {
 	if(len > 0 && tmp[len - 1] == '/') {
 		tmp[len - 1] = 0;
 	}
+
 	for(p = tmp + 1; *p; p++) {
 		if (*p == '/') {
 			*p = 0;
-			mkdir(tmp, 0755);
+			if (mkdir(tmp, 0755) != 0) {
+				if (errno != EEXIST) {
+					fprintf(stderr, "Failed to create directory '%s': ", tmp);
+					perror("");
+					return -1;
+				}
+			}
 			*p = '/';
 		}
 	}
-	mkdir(tmp, 0755);
+
+	if (mkdir(tmp, 0755) != 0) {
+		if (errno != EEXIST) {
+			fprintf(stderr, "Failed to create directory '%s': ", tmp);
+			perror("");
+			return -1;
+		}
+	}
+
+	return 0;
 }
 
 void create_parent_directories(const char* file_path) {
@@ -100,4 +117,24 @@ void copy_static_files(const char* src_dir, const char* dest_dir) {
 	closedir(dir);
 }
 
+int check_path_type(const char* path) {
+	struct stat st;
 
+	if (stat(path, &st) != 0) {
+		if (errno == ENOENT) {
+			// Path does not exist
+			return 0;
+		}
+		// Other stat error
+		perror("stat");
+		return -1;
+	}
+
+	if (S_ISDIR(st.st_mode)) {
+		// Path is a directory
+		return 2;
+	}
+
+	// Path is a regular file or other type
+	return 1;
+}
