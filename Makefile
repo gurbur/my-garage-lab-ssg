@@ -21,8 +21,10 @@ LIB_SRCS = \
           dynamic_buffer.c \
           hash_table.c \
           file_utils.c \
+					hash_utils.c \
           config_loader.c \
           ignore_handler.c \
+					cache_manager.c \
           cJSON.c sha256.c
 
 LIB_OBJS = $(addprefix $(OBJ_DIR)/, $(LIB_SRCS:.c=.o))

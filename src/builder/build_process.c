@@ -13,6 +13,8 @@
 #include "../include/dynamic_buffer.h"
 #include "../include/ignore_handler.h"
 #include "../include/file_utils.h"
+#include "../include/hash_utils.h"
+#include "../include/hash_table.h"
 
 #define MAX_PATH_LENGTH 1024
 
@@ -117,16 +119,16 @@ static char* parse_front_matter(FILE* file, TemplateContext* context) {
 	return destroy_buffer_and_get_content(db);
 }
 
-static void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* s_context, TemplateContext* global_context);
-static void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_context, TemplateContext* global_context);
+static void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* s_context, TemplateContext* global_context, HashTable* old_cache, HashTable* new_cache);
+static void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_context, TemplateContext* global_context, HashTable* old_cache, HashTable* new_cache);
 
-void build_site(const char* vault_path, SiteContext* s_context, TemplateContext* global_context) {
+void build_site(const char* vault_path, SiteContext* s_context, TemplateContext* global_context, HashTable* old_cache, HashTable* new_cache) {
 	printf("\n---- STARTING SITE GENERATION ----\n");
-	build_site_recursively(vault_path, s_context->root, s_context, global_context);
+	build_site_recursively(vault_path, s_context->root, s_context, global_context, old_cache, new_cache);
 	printf("\n---- SITE GENERATION FINISHED ----\n\n");
 }
 
-void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* s_context, TemplateContext* global_context) {
+void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* s_context, TemplateContext* global_context, HashTable* old_cache, HashTable* new_cache) {
 	if (is_ignored(node->full_path) || (strlen(node->name) > 0 && node->name[0] == '.')) {
 		printf("[SKIP] Ignoring path: %s\n", node->full_path);
 		return;
@@ -235,18 +237,30 @@ void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* 
 		free_template_context(page_context);
 
 		list_for_each_entry(child, &node->children, sibling) {
-			build_site_recursively(vault_path, child, s_context, global_context);
+			build_site_recursively(vault_path, child, s_context, global_context, old_cache, new_cache);
 		}
 	} else if (strstr(node->name, ".md")) {
-		process_file(vault_path, node, s_context, global_context);
+		process_file(vault_path, node, s_context, global_context, old_cache, new_cache);
 	}
 }
 
-void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_context, TemplateContext* global_context) {
+void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_context, TemplateContext* global_context, HashTable* old_cache, HashTable* new_cache) {
 	printf("Processing: %s\n", current_node->full_path);
 
 	char full_input_path[MAX_PATH_LENGTH];
 	snprintf(full_input_path, sizeof(full_input_path), "%s/%s", vault_path, current_node->full_path);
+
+	char* current_hash = generate_file_hash(full_input_path);
+	char* old_hash = old_cache ? (char*)ht_get(old_cache, full_input_path) : NULL;
+
+	if (current_hash && old_hash && strcmp(current_hash, old_hash) == 0) {
+		printf("Skipping (cached): %s\n", current_node->full_path);
+		ht_set(new_cache, strdup(full_input_path), strdup(current_hash));
+		free(current_hash);
+		return;
+	}
+
+	printf("Building: %s\n", current_node->full_path);
 
 	FILE* md_file = fopen(full_input_path, "r");
 	if (!md_file) {
@@ -311,6 +325,10 @@ void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_
 		} else {
 			fprintf(stderr, "	[ERROR] Failed to write to: %s\n", full_output_path);
 		}
+
+		if (current_hash) {
+			ht_set(new_cache, strdup(full_input_path), strdup(current_hash));
+		}
 	}
 
 	free(content_md);
@@ -319,6 +337,7 @@ void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_
 	free(final_html);
 	free_ast(ast_root);
 	free_template_context(t_context);
+	if (current_hash) free(current_hash);
 }
 
 

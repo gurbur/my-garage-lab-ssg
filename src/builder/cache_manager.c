@@ -48,18 +48,23 @@ HashTable* load_cache() {
 		return cache;
 	}
 
-	char* line = strtok(content, "\n");
+	char* content_copy = strdup(content);
+	char* line = strtok(content_copy, "\n");
 	while (line != NULL) {
 		char* delimiter = strchr(line, ':');
 		if (delimiter) {
 			*delimiter = '\0';
 			char* key = line;
 			char* value = delimiter + 1;
-			ht_set(cache, key, value);
+
+			char* key_copy = strdup(key);
+			char* value_copy = strdup(value);
+			ht_set(cache, key_copy, value_copy);
 		}
 		line = strtok(NULL, "\n");
 	}
 
+	free(content_copy);
 	free(content);
 	return cache;
 }
