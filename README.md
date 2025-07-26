@@ -57,14 +57,14 @@
 
 ### 🏃 사용법
 
-빌드된 `ssg` 실행 파일을 사용하여 정적 사이트를 생성할 수 있습니다.
+생성된 실행 파일을 Obsidian Vault의 루트 디렉토리로 옮겨서 사용해주세요.
+
+1. 실행 파일 이동: `build/ssg` 파일을 복사하거나 이동하여 사용하고자 하는 Obsidian Vault의 최상위 폴더에 넣어주세요.
+2. 빌드 실행: 터미널에서 Obsidian Vault 폴더로 이동한 뒤, 아래 명령어를 실행합니다.
 
 ```bash
-# 현재 디렉토리의 Obsidian Vault를 기준으로 빌드
-./builds/ssg
-
-# 특정 경로의 Obsidian Vault를 기준으로 빌드
-./builds/ssg /path/to/your/vault
+# Obsidian Vault 폴더 안에서 실행
+./ssg
 ```
 
 빌드가 성공적으로 완료되면 `config.json`에 지정된 출력 디렉토리(기본값: `ssg_output`)에 결과물이 생성됩니다.
@@ -97,6 +97,28 @@
   * `hard_line_breaks`: `true`로 설정하면 마크다운에서 엔터 한 번만으로도 줄바꿈(`<br>`)이 적용됩니다.
   * `build.output_dir`: 빌드 결과물이 저장될 디렉토리 이름입니다.
   * `build.static_dir`, `build.image_dir`: 빌드 시 그대로 `output_dir`에 복사될 정적 파일(CSS, JS) 및 이미지 디렉토리의 이름입니다.
+
+`.ssgignore`
+
+빌드 과정에서 특정 파일이나 디렉토리를 제외하고 싶을 때 사용합니다. Vault의 루트 디렉토리에 `.ssgignore` 파일을 생성하고, `.gitignore`와 동일한 방식으로 제외할 경로를 한 줄에 하나씩 추가하면 됩니다.
+
+예시 `.ssgignore`:
+
+```
+# Git 관련 파일 제외
+.git
+
+# Obsidian 관련 파일 제외
+.obsidian
+
+# 빌드 결과물 디렉토리 제외 (권장)
+ssg_output
+
+# 특정 임시 파일이나 폴더 제외
+temp/
+drafts/My Secret Draft.md
+.excalidraw/
+```
 
 </details>
 
@@ -156,14 +178,14 @@ Use the `make` command to compile the project and create an executable.
 
 ### 🏃 Usage
 
-You can use the built `ssg` executable to generate your static site.
+It is recommended to move the generated executable into the root of your Obsidian Vault.
 
-```bash
-# Build based on the Obsidian Vault in the current directory
-./builds/ssg
+1. Move the Executable: Copy or move the `build/ssg` file into root folder of your Obsidian Vault.
+2. Run the build: Navigate to your Obsidian Vault folder in your terminal and run the following command.
 
-# Build based on a specific Obsidian Vault path
-./builds/ssg /path/to/your/vault
+```Bash
+# Run from within your Obsidian Vault folder
+./ssg
 ```
 
 Upon successful build, the output will be generated in the directory specified in `config.json` (default: `ssg_output`).
@@ -196,4 +218,26 @@ You can control the site's behavior by modifying the `config.json` file in the p
   * `hard_line_breaks`: If set to `true`, single newlines in Markdown will be converted to `<br>` tags.
   * `build.output_dir`: The directory where the build output will be stored.
   * `build.static_dir`, `build.image_dir`: Names of directories for static files (CSS, JS) and images that will be copied as-is to the `output_dir` during the build.
+
+### `.ssgignore`
+
+Use this file to exclude specified files or directories from the build process. Create a `.ssgignore` file in the root of your vault and add patterns to ignore, one per line, just like a `.gitignore` file.
+
+Example `.ssgignore`:
+
+```
+# Exclude Git files
+.git
+
+# Exclude Obsidian settings
+.obsidian
+
+# Exclude the build output directory (Recommanded)
+ssg_output
+
+# Exclude specified temporary files or folders
+temp/
+drafts/My Secret Draft.md
+Excalidraw/
+```
 
