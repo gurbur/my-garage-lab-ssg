@@ -14,7 +14,7 @@
       * Vault의 디렉토리 구조를 기반으로 **동적 사이드바**와 **Breadcrumb**을 자동으로 생성합니다.
   * **고성능 증분 빌드 (Incremental Build)**:
       * 파일 내용의 해시(SHA256)를 캐싱하여, 변경된 파일만 다시 빌드하고 삭제된 파일의 결과물은 자동으로 제거합니다. 이를 통해 대규모 Vault에서도 빠른 빌드 속도를 유지합니다.
-  * **유연한 설정**: `config.json` 파일을 통해 사이트 제목, 빌드 경로, 메뉴 등 다양한 옵션을 쉽게 설정할 수 있습니다.
+  * **유연한 설정**: `config.json` 파일을 통해 사이트 제목, 빌드 경로, 메뉴 등 다양한 옵션을 쉽게 설정할 수 있습니다. 예시로 `config.json`이 repository에 업로드되어 있습니다.
 
 ## 🚀 시작하기
 
@@ -135,7 +135,7 @@ A **Static Site Generator for Obsidian Vaults**, built from scratch in C for my 
       * Generates a **dynamic sidebar** and **breadcrumbs** based on your Vault's directory structure.
   * **High-Performance Incremental Builds**:
       * Caches the hash (SHA256) of file contents to rebuild only modified files and automatically removes outputs of deleted files. This ensures fast build times even for large Vaults.
-  * **Flexible Configuration**: Easily configure various options like site title, build paths, and menus through a `config.json` file.
+  * **Flexible Configuration**: Easily configure various options like site title, build paths, and menus through a `config.json` file. An example `config.json` file is uploaded in this repository.
 
 ## 🚀 Getting Started
 
