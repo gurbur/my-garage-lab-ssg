@@ -248,7 +248,7 @@ static AstNode* parse_obsidian_link(ParserState* state, bool is_image) {
 
 			if (name_len > 3 && strcmp(target_name + name_len - 3, ".md") == 0) {
 				relative_path = malloc(strlen(target_node->slug) + 7);
-				sprintf(relative_path, "/%s.html", target_node->slug);
+				sprintf(relative_path, "/%s", target_node->slug);
 			} else {
 				relative_path = malloc(strlen(target_node->output_path) + 2);
 				sprintf(relative_path, "/%s", target_node->output_path);

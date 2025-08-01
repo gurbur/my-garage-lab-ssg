@@ -8,7 +8,7 @@
 		-> TEXT | data1: "."
 		-> SOFT_BREAK
 		-> TEXT | data1: "Obsidian 내부 글 링크는 이렇게 생겼습니다: "
-		-> LINK | data1: "(1) 첫 글" | data2: "/tests/mock_vault/(1) 첫 글.html"
+		-> LINK | data1: "(1) 첫 글" | data2: "/(1) 첫 글"
 		-> TEXT | data1: "."
 		-> SOFT_BREAK
 		-> TEXT | data1: "마지막으로, Obsidian 이미지 링크는 이렇게 생겼습니다:"
