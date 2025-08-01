@@ -143,99 +143,104 @@ void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* 
 			return;
 		}
 
-		printf("[DIR] Generating index for: %s\n", node->full_path);
+		if (strlen(node->name) > 0) {
+			char category_key[MAX_PATH_LENGTH];
+			snprintf(category_key, sizeof(category_key), "category_slugs.%s", node->name);
+			const char* category_slug = get_from_context(global_context, category_key);
 
-		create_parent_directories(node->output_path);
+			if (!category_slug) {
+				printf("[SKIP] No slug defined for directory: %s\n", node->name);
+			} else {
+				printf("[DIR] Generating category page for: %s\n", node->full_path);
 
-		int post_count = 0;
+				int post_count = 0;
+				NavNode* child;
+				list_for_each_entry(child, &node->children, sibling) {
+					if (!child->is_directory && strstr(child->name, ".md") && !is_ignored(child->full_path)) {
+						post_count++;
+					}
+				}
+
+				if (post_count > 0) {
+					PostSortInfo* sort_array = malloc(post_count * sizeof(PostSortInfo));
+					int current_index = 0;
+					list_for_each_entry(child, &node->children, sibling) {
+						if (!child->is_directory && strstr(child->name, ".md") && !is_ignored(child->full_path)) {
+							sort_array[current_index].node = child;
+							char full_input_path[MAX_PATH_LENGTH];
+							snprintf(full_input_path, sizeof(full_input_path), "%s/%s", vault_path, child->full_path);
+							extract_sort_info(full_input_path, &sort_array[current_index]);
+							current_index++;
+						}
+					}
+
+					qsort(sort_array, post_count, sizeof(PostSortInfo), compare_posts);
+
+					const char* base_url = get_from_context(global_context, "base_url");
+					if (!base_url) base_url = "";
+
+					DynamicBuffer* post_list_buffer = create_dynamic_buffer(1024);
+					for (int i = 0; i < post_count; i++) {
+						NavNode* sorted_child = sort_array[i].node;
+						TemplateContext* card_context = create_template_context();
+
+						char link_path[MAX_PATH_LENGTH];
+						snprintf(link_path, sizeof(link_path), "%s/%s", base_url, sorted_child->slug);
+
+						char* title_from_name = strdup(sorted_child->name);
+						char* dot = strrchr(title_from_name, '.');
+						if (dot) *dot = '\0';
+
+						add_to_context(card_context, "card_item_title", title_from_name);
+						free(title_from_name);
+
+						add_to_context(card_context, "card_item_link", link_path);
+						add_to_context(card_context, "card_item_content", "내용 예시");
+
+						char* rendered_card = render_template("templates/components/card.html", card_context);
+						buffer_append_formatted(post_list_buffer, "%s", rendered_card);
+
+						free(rendered_card);
+						free_template_context(card_context);
+					}
+					for (int i = 0; i < post_count; i++) {
+						free(sort_array[i].date);
+					}
+					free(sort_array);
+
+					char* post_list_html = destroy_buffer_and_get_content(post_list_buffer);
+
+					TemplateContext* page_context = create_template_context();
+					copy_context(page_context, global_context);
+
+					generate_breadcrumb_html(node, page_context, s_context);
+					add_to_context(page_context, "list_title", node->name);
+					add_to_context(page_context, "title", node->name);
+					add_to_context(page_context, "post_list_content", post_list_html);
+
+					char* content_html = render_template("templates/layout/post_list_layout.html", page_context);
+					add_to_context(page_context, "content", content_html);
+					char* final_html = render_template("templates/layout/base.html", page_context);
+
+					char output_path[MAX_PATH_LENGTH];
+					const char* output_dir = get_from_context(global_context, "build.output_dir");
+					snprintf(output_path, sizeof(output_path), "%s/%s.html", output_dir ? output_dir : "ssg_output", category_slug);
+					FILE* out_file = fopen(output_path, "w");
+					if (out_file) {
+						fprintf(out_file, "%s", final_html);
+						fclose(out_file);
+						printf("Generated index page: %s\n", output_path);
+					}
+
+					free(post_list_html);
+					free(content_html);
+					free(final_html);
+					free_template_context(page_context);
+				}
+			}
+		}
+
 		NavNode* child;
-		list_for_each_entry(child, &node->children, sibling) {
-			if (!child->is_directory && strstr(child->name, ".md") && !is_ignored(child->full_path)) {
-				post_count++;
-			}
-		}
-
-		PostSortInfo* sort_array = malloc(post_count * sizeof(PostSortInfo));
-		int current_index = 0;
-		list_for_each_entry(child, &node->children, sibling) {
-			if (!child->is_directory && strstr(child->name, ".md") && !is_ignored(child->full_path)) {
-				sort_array[current_index].node = child;
-				char full_input_path[MAX_PATH_LENGTH];
-				snprintf(full_input_path, sizeof(full_input_path), "%s/%s", vault_path, child->full_path);
-				extract_sort_info(full_input_path, &sort_array[current_index]);
-				current_index++;
-			}
-		}
-
-		qsort(sort_array, post_count, sizeof(PostSortInfo), compare_posts);
-
-		char* card_template_str = read_file_into_string("templates/components/card.html");
-		DynamicBuffer* post_list_buffer = create_dynamic_buffer(1024);
-
-		for (int i = 0; i < post_count; i++) {
-			NavNode* sorted_child = sort_array[i].node;
-			TemplateContext* card_context = create_template_context();
-			char* title_no_ext = strdup(sorted_child->name);
-			char* dot = strrchr(title_no_ext, '.');
-			if (dot) *dot = '\0';
-
-			char* link_filename = strdup(sorted_child->output_path);
-			char* last_slash = strrchr(link_filename, '/');
-			const char* final_link = last_slash ? last_slash + 1 : link_filename;
-
-			add_to_context(card_context, "card_item_title", title_no_ext);
-			add_to_context(card_context, "card_item_link", final_link);
-			add_to_context(card_context, "card_item_content", "내용 예시");
-
-			char* rendered_card = render_template("templates/components/card.html", card_context);
-			buffer_append_formatted(post_list_buffer, "%s", rendered_card);
-
-			free(rendered_card);
-			free(title_no_ext);
-			free(link_filename);
-			free_template_context(card_context);
-		}
-		for (int i = 0; i < post_count; i++) {
-			free(sort_array[i].date);
-		}
-		free(sort_array);
-
-		if (card_template_str) free(card_template_str);
-		char* post_list_html = destroy_buffer_and_get_content(post_list_buffer);
-
-		TemplateContext* page_context = create_template_context();
-		copy_context(page_context, global_context);
-
-		generate_breadcrumb_html(node, page_context, s_context);
-		add_to_context(page_context, "list_title", strlen(node->name) > 0 ? node->name : "Home");
-		add_to_context(page_context, "title", strlen(node->name) > 0 ? node->name : "Home");
-
-		add_to_context(page_context, "post_list_content", post_list_html);
-		char* content_html = render_template("templates/layout/post_list_layout.html", page_context);
-
-		add_to_context(page_context, "content", content_html);
-		char* final_html = render_template("templates/layout/base.html", page_context);
-
-		char output_path[MAX_PATH_LENGTH];
-		if (strlen(node->full_path) == 0) {
-			snprintf(output_path, sizeof(output_path), "ssg_output/index.html");
-		} else {
-			snprintf(output_path, sizeof(output_path), "ssg_output/%s/index.html", node->full_path);
-			create_parent_directories(output_path);
-		}
-
-		FILE* out_file = fopen(output_path, "w");
-		if (out_file) {
-			fprintf(out_file, "%s", final_html);
-			fclose(out_file);
-			printf("Generated index page: %s\n", output_path);
-		}
-
-		free(post_list_html);
-		free(content_html);
-		free(final_html);
-		free_template_context(page_context);
-
 		list_for_each_entry(child, &node->children, sibling) {
 			build_site_recursively(vault_path, child, s_context, global_context, old_cache, new_cache);
 		}
@@ -332,7 +337,8 @@ void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_
 		const char* output_dir = get_from_context(global_context, "build.output_dir");
 		if (!output_dir) output_dir = "ssg_output";
 		char full_output_path[MAX_PATH_LENGTH];
-		snprintf(full_output_path, sizeof(full_output_path), "%s/%s", output_dir, current_node->output_path);
+
+		snprintf(full_output_path, sizeof(full_output_path), "%s/%s.html", output_dir, current_node->slug);
 
 		create_parent_directories(full_output_path);
 

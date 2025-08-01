@@ -46,5 +46,16 @@ void load_config(const char* config_path, TemplateContext* context) {
 
 	populate_context_from_json(context, config_json, "");
 
+	cJSON* category_slugs_json = cJSON_GetObjectItemCaseSensitive(config_json, "category_slugs");
+	if (cJSON_IsObject(category_slugs_json)) {
+		cJSON* category_slug = NULL;
+		cJSON_ArrayForEach(category_slug, category_slugs_json) {
+			if (cJSON_IsString(category_slug) && (category_slug->valuestring != NULL)) {
+				char key[256];
+				snprintf(key, sizeof(key), "category_slugs.%s", category_slug->string);
+				add_to_context(context, key, category_slug->valuestring);
+			}
+		}
+	}
 	cJSON_Delete(config_json);
 }

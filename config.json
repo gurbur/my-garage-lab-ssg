@@ -18,5 +18,9 @@
 			".obsidian",
 			"Excalidraw"
 		]
+	},
+	"category_slugs": {
+		"블로그 제작기": "blog-building",
+		"회고록": "memoir"
 	}
 }

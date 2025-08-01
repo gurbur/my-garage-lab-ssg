@@ -242,7 +242,17 @@ static AstNode* parse_obsidian_link(ParserState* state, bool is_image) {
 		}
 
 		if (target_node) {
-			char* relative_path = calculate_relative_path(state->current_file_path, target_node->output_path);
+			char* relative_path;
+			const char* target_name = target_node->name;
+			size_t name_len = strlen(target_name);
+
+			if (name_len > 3 && strcmp(target_name + name_len - 3, ".md") == 0) {
+				relative_path = malloc(strlen(target_node->slug) + 7);
+				sprintf(relative_path, "/%s.html", target_node->slug);
+			} else {
+				relative_path = malloc(strlen(target_node->output_path) + 2);
+				sprintf(relative_path, "/%s", target_node->output_path);
+			}
 
 			link_node = create_ast_node(
 					is_image ? NODE_IMAGE_LINK : NODE_LINK,
