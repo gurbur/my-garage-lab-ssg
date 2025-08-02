@@ -1,4 +1,4 @@
-<main>
+<main class="main-page-layout">
 	<div class="intro">
 		<h1 class="intro_heading">My Garage Lab</h1>
 		<p class="intro_para">
@@ -6,9 +6,10 @@
 		</p>
 	</div>
 	<div class="recent">
+		<h2>최신 글</h2>
 		{{ recent_posts_list }}
 	</div>
-	<div claa="see-more">
-		<a href="LINK">더 보기...</a>
+	<div class="see-more">
+	<a href="{{ see_more_link }}">더 보기...</a>
 	</div>
 </main>

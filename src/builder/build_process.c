@@ -18,14 +18,6 @@
 
 #define MAX_PATH_LENGTH 1024
 
-typedef struct {
-	NavNode* node;
-	int id;
-	int order;
-	char* date;
-	bool has_order;
-} PostSortInfo;
-
 static char* trim_whitespace(char* str) {
 	while (isspace((unsigned char)*str)) str++;
 	if (*str == 0) return str;
@@ -51,11 +43,11 @@ int compare_posts(const void* a, const void* b) {
 	}
 
 	if (postA->id != postB->id) {
-		return postA->id - postB->id;
+		return postB->id - postA->id;
 	}
 
 	if (postA->date && postB->date) {
-		return strcmp(postA->date, postB->date);
+		return strcmp(postB->date, postA->date);
 	}
 
 	return 0;
@@ -119,16 +111,16 @@ static char* parse_front_matter(FILE* file, TemplateContext* context) {
 	return destroy_buffer_and_get_content(db);
 }
 
-static void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* s_context, TemplateContext* global_context, HashTable* old_cache, HashTable* new_cache);
-static void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_context, TemplateContext* global_context, HashTable* old_cache, HashTable* new_cache);
+static void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* s_context, TemplateContext* global_context, HashTable* old_cache, HashTable* new_cache, struct list_head* all_posts);
+static void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_context, TemplateContext* global_context, HashTable* old_cache, HashTable* new_cache, struct list_head* all_posts);
 
-void build_site(const char* vault_path, SiteContext* s_context, TemplateContext* global_context, HashTable* old_cache, HashTable* new_cache) {
+void build_site(const char* vault_path, SiteContext* s_context, TemplateContext* global_context, HashTable* old_cache, HashTable* new_cache, struct list_head* all_posts) {
 	printf("\n---- STARTING SITE GENERATION ----\n");
-	build_site_recursively(vault_path, s_context->root, s_context, global_context, old_cache, new_cache);
+	build_site_recursively(vault_path, s_context->root, s_context, global_context, old_cache, new_cache, all_posts);
 	printf("\n---- SITE GENERATION FINISHED ----\n\n");
 }
 
-void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* s_context, TemplateContext* global_context, HashTable* old_cache, HashTable* new_cache) {
+void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* s_context, TemplateContext* global_context, HashTable* old_cache, HashTable* new_cache, struct list_head* all_posts) {
 	if (is_ignored(node->full_path) || (strlen(node->name) > 0 && node->name[0] == '.')) {
 		printf("[SKIP] Ignoring path: %s\n", node->full_path);
 		return;
@@ -242,14 +234,14 @@ void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* 
 
 		NavNode* child;
 		list_for_each_entry(child, &node->children, sibling) {
-			build_site_recursively(vault_path, child, s_context, global_context, old_cache, new_cache);
+			build_site_recursively(vault_path, child, s_context, global_context, old_cache, new_cache, all_posts);
 		}
 	} else if (strstr(node->name, ".md")) {
-		process_file(vault_path, node, s_context, global_context, old_cache, new_cache);
+		process_file(vault_path, node, s_context, global_context, old_cache, new_cache, all_posts);
 	}
 }
 
-void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_context, TemplateContext* global_context, HashTable* old_cache, HashTable* new_cache) {
+void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_context, TemplateContext* global_context, HashTable* old_cache, HashTable* new_cache, struct list_head* all_posts) {
 	printf("Processing: %s\n", current_node->full_path);
 
 	char full_input_path[MAX_PATH_LENGTH];
@@ -357,6 +349,10 @@ void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_
 			char* cache_value_str = destroy_buffer_and_get_content(db);
 			ht_set(new_cache, strdup(full_input_path), cache_value_str);
 		}
+		PostSortInfo* post_info = malloc(sizeof(PostSortInfo));
+		post_info->node = current_node;
+		extract_sort_info(full_input_path, post_info);
+		list_add_tail(&post_info->list, all_posts);
 	}
 
 	free(content_md);
