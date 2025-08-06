@@ -247,6 +247,11 @@ void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_
 	char full_input_path[MAX_PATH_LENGTH];
 	snprintf(full_input_path, sizeof(full_input_path), "%s/%s", vault_path, current_node->full_path);
 
+	PostSortInfo* post_info = malloc(sizeof(PostSortInfo));
+	post_info->node = current_node;
+	extract_sort_info(full_input_path, post_info);
+	list_add_tail(&post_info->list, all_posts);
+
 	char* current_hash = generate_file_hash(full_input_path);
 	char* old_cache_value = old_cache ? (char*)ht_get(old_cache, full_input_path) : NULL;
 
@@ -349,10 +354,6 @@ void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_
 			char* cache_value_str = destroy_buffer_and_get_content(db);
 			ht_set(new_cache, strdup(full_input_path), cache_value_str);
 		}
-		PostSortInfo* post_info = malloc(sizeof(PostSortInfo));
-		post_info->node = current_node;
-		extract_sort_info(full_input_path, post_info);
-		list_add_tail(&post_info->list, all_posts);
 	}
 
 	free(content_md);
