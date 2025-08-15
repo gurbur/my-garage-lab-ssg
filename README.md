@@ -1,7 +1,7 @@
 <details>
 <summary>🇰🇷 한국어</summary>
 
-# My Garage Lab SSG
+# My Garage Lab - SSG
 
 제 블로그를 위해 C언어로 처음부터 직접 개발한 **Obsidian Vault용 정적 사이트 생성기(Static Site Generator)**입니다. 이 프로젝트는 단순한 결과물 생성을 넘어, 컴파일러, 자료구조, 시스템 프로그래밍 등 컴퓨터 과학의 근본 원리를 실제 프로젝트에 적용하며 깊이 있게 이해하는 것을 목표로 합니다.
 
