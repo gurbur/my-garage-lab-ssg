@@ -15,6 +15,7 @@
 #include "include/cache_manager.h"
 #include "include/hash_table.h"
 #include "include/dynamic_buffer.h"
+#include "include/feed_generator.h"
 
 #define MAX_PATH_LENGTH 1024
 
@@ -114,14 +115,17 @@ int main(int argc, char *argv[]) {
 	generate_main_index_page(&all_posts, global_context);
 	generate_all_posts_page(&all_posts, global_context);
 
+	printf("[STEP 12] Generating sitemap and RSS feed...\n");
+	generate_sitemap(site_context, &all_posts, global_context);
+	generate_rss_feed(&all_posts, global_context);
+
+	printf("[STEP 13] Cleaning up and saving cache...\n");
 	PostSortInfo *post_info, *tmp;
 	list_for_each_entry_safe(post_info, tmp, &all_posts, list) {
 		list_del(&post_info->list);
 		free(post_info->date);
 		free(post_info);
 	}
-
-	printf("[STEP 12] Cleaning up and saving cache...\n");
 	save_cache(new_cache);
 	ht_destroy(old_cache, free);
 	ht_destroy(new_cache, free);

@@ -7,7 +7,7 @@ OBJ_DIR = $(BUILD_DIR)/obj
 SRC_DIRS = src \
 					 src/libs/cjson src/libs/sha256 \
 					 src/utils tests/src src/builder \
-					 src/tokenizer src/parser src/html_generator src/template_engine \
+					 src/tokenizer src/parser src/html_generator src/template_engine src/feed_generator \
 
 VPATH = $(SRC_DIRS)
 
@@ -25,6 +25,7 @@ LIB_SRCS = \
           config_loader.c \
           ignore_handler.c \
 					cache_manager.c \
+					feed_generator.c \
           cJSON.c sha256.c
 
 LIB_OBJS = $(addprefix $(OBJ_DIR)/, $(LIB_SRCS:.c=.o))
