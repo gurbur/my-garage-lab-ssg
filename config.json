@@ -21,6 +21,7 @@
 	},
 	"category_slugs": {
 		"블로그 제작기": "blog-building",
-		"회고록": "memoir"
+		"회고록": "memoir",
+		"야매논문읽기":"yame-nonmun-explain"
 	}
 }
