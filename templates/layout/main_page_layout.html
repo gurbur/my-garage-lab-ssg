@@ -1,15 +1,18 @@
 <main class="main-page-layout">
-	<div class="intro">
-		<h1 class="intro_heading">My Garage Lab</h1>
+	<section class="intro">
+		<h1 class="intro_heading">Welcome to My Garage Lab</h1>
 		<p class="intro_para">
-			My Garage Lab은 제 개인 블로그를 가장 기초적인 기술(C, Socket, HTML, CSS, JS 등)로, 서버와 웹페이지, 데이터베이스, 인프라까지 전부 직접 만들어보고 싶다는 생각에서 시작된 블로그 서비스 입니다.
+		이곳은 기초 기술만을 사용해서<br>
+		서버부터 인프라까지 직접 만들어서 쌓아올려보는<br>
+		저의 기술 실험실 입니다.
 		</p>
-	</div>
-	<div class="recent">
+	</section>
+
+	<section class="recent">
 		<h2>최신 글</h2>
 		{{ recent_posts_list }}
-	</div>
+	</section>
 	<div class="see-more">
-	<a href="{{ see_more_link }}">더 보기...</a>
+		<a href="{{ see_more_link }}">더 보기...</a>
 	</div>
 </main>
