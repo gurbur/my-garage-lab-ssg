@@ -8,7 +8,8 @@ TemplateContext* create_template_context() {
 }
 
 void add_to_context(TemplateContext* context, const char* key, const char* value) {
-	ht_set(context, key, strdup(value));
+	const char* safe_value = (value != NULL) ? value : "";
+	ht_set(context, key, strdup(safe_value));
 }
 
 void free_template_context(TemplateContext* context) {
