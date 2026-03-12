@@ -11,6 +11,7 @@
 #include "../include/ignore_handler.h"
 
 #define MAX_PATH_LENGTH 1024
+#define EXCERPT_TARGET_LEN 150
 
 static void scan_recursively(NavNode* parent, HashTable* name_lookup, HashTable* path_lookup, const char* base_path, const char* current_subpath);
 static void build_sidebar_html_recursively(NavNode* node, DynamicBuffer* buffer, const char* base_url, TemplateContext* context);
@@ -62,32 +63,64 @@ static char* extract_excerpt_from_file(const char* file_path) {
 
 	char line[MAX_PATH_LENGTH];
 
+	// Skipping Frontmatter
 	if (fgets(line, sizeof(line), file) && strncmp(line, "---", 3) == 0) {
 		while (fgets(line, sizeof(line), file)) {
 			if (strncmp(line, "---", 3) == 0) break;
 		}
 	} else {
+		// if no frontmatter detected, rewind to start
 		fseek(file, 0, SEEK_SET);
 	}
 
-	char* excerpt = NULL;
-	while(fgets(line, sizeof(line), file)) {
+	char excerpt_buffer[MAX_PATH_LENGTH] = {0};
+	int current_len = 0;
+
+	while (fgets(line, sizeof(line), file)) {
 		char* p = line;
+		
 		while (*p && isspace((unsigned char)*p)) p++;
-
+		
 		if (*p == '\0') continue;
-
+		
+		if (p[0] == '#') continue; 
+		if (strncmp(p, "이전 글:", strlen("이전 글:")) == 0) continue;
+		if (strncmp(p, "다음 글:", strlen("다음 글:")) == 0) continue;
+		if (strncmp(p, "처음부터 보기:", strlen("처음부터 보기:")) == 0) continue;
+		
 		size_t len = strlen(p);
-		while(len > 0 && isspace((unsigned char)p[len - 1])) {
+		while (len > 0 && isspace((unsigned char)p[len - 1])) {
 			p[--len] = '\0';
 		}
+		
+		if (len == 0) continue;
 
-		excerpt = strdup(p);
-		break;
+		if (current_len > 0) {
+			strncat(excerpt_buffer, " ", sizeof(excerpt_buffer) - current_len - 1);
+			current_len++;
+		}
+
+		if (current_len == 0) {
+			strncat(excerpt_buffer, p, sizeof(excerpt_buffer) - current_len - 1);
+			current_len += len;
+			if (current_len >= EXCERPT_TARGET_LEN) break; 
+		} else {
+			if (current_len + len < EXCERPT_TARGET_LEN) {
+				strncat(excerpt_buffer, p, sizeof(excerpt_buffer) - current_len - 1);
+				current_len += len;
+			} else {
+				break;
+			}
+		}
 	}
 	fclose(file);
+	
+	if (current_len > 0) {
+		return strdup(excerpt_buffer);
+	}
+	
+	return NULL;
 
-	return excerpt;
 }
 
 SiteContext* create_site_context(const char* vault_path) {
