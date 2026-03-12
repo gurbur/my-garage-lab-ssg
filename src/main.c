@@ -241,10 +241,15 @@ void generate_all_posts_page(struct list_head* all_posts, TemplateContext* globa
 		add_to_context(card_context, "card_item_link", link_path);
 		add_to_context(card_context, "card_item_content", "더보기...");
 		char* rendered_card = render_template("templates/components/card.html", card_context);
-		buffer_append_formatted(post_list_buffer, "%s", rendered_card);
+
+		if (rendered_card != NULL) {
+			buffer_append_formatted(post_list_buffer, "%s", rendered_card);
+			free(rendered_card);
+		} else {
+			fprintf(stderr, "[ERROR] Main page card rendereing failed\n");
+		}
 
 		free(title_from_name);
-		free(rendered_card);
 		free_template_context(card_context);
 	}
 

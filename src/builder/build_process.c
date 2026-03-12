@@ -212,7 +212,7 @@ void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* 
 					generate_breadcrumb_html(node, page_context, s_context);
 					add_to_context(page_context, "list_title", node->name);
 					add_to_context(page_context, "title", node->name);
-					add_to_context(page_context, "post_list_content", post_list_html);
+					add_to_context(page_context, "post_list", post_list_html);
 
 					char* content_html = render_template("templates/layout/post_list_layout.html", page_context);
 					add_to_context(page_context, "content", content_html);
