@@ -201,10 +201,6 @@ void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* 
 
 						free_template_context(card_context);
 					}
-					for (int i = 0; i < post_count; i++) {
-						free(sort_array[i].date);
-					}
-					free(sort_array);
 
 					char* post_list_html = destroy_buffer_and_get_content(post_list_buffer);
 
