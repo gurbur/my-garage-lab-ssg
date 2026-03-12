@@ -190,9 +190,13 @@ void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* 
 						add_to_context(card_context, "card_item_content", "내용 예시");
 
 						char* rendered_card = render_template("templates/components/card.html", card_context);
-						buffer_append_formatted(post_list_buffer, "%s", rendered_card);
+						if (rendered_card != NULL) {
+							buffer_append_formatted(post_list_buffer, "%s", rendered_card);
+							free(rendered_card);
+						} else {
+							fprintf(stderr, "[ERROR] Template Rendered Failed!: templates/components/card.html\n");
+						}
 
-						free(rendered_card);
 						free_template_context(card_context);
 					}
 					for (int i = 0; i < post_count; i++) {

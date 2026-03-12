@@ -115,6 +115,8 @@ static char* render_data(char* html_content, TemplateContext* context) {
 						} else {
 							buffer_append_formatted(output_buffer, "%.*s", (int)full_placeholder_len, p);
 						}
+					} else {
+						buffer_append_formatted(output_buffer, "%.s", (int)full_placeholder_len, p);
 					}
 				} else {
 					buffer_append_formatted(output_buffer, "%.*s", (int)full_placeholder_len, p);
