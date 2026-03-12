@@ -79,7 +79,10 @@ static char* extract_excerpt_from_file(const char* file_path) {
 	while (fgets(line, sizeof(line), file)) {
 		char* p = line;
 		
-		while (*p && isspace((unsigned char)*p)) p++;
+		// ignore markdown grammer, whitespaces
+		while (*p && (isspace((unsigned char)*p) || *p == '-' || *p == '*' || *p == '>')) {
+			p++;
+		}
 		
 		if (*p == '\0') continue;
 		
@@ -95,32 +98,45 @@ static char* extract_excerpt_from_file(const char* file_path) {
 		
 		if (len == 0) continue;
 
+		char clean_text[MAX_PATH_LENGTH];
+		int j = 0;
+		for (int i = 0; i < len; i++) {
+			if (p[i] != '*' && p[i] != '_' && p[i] != '[' && p[i] != ']' && p[i] != '`' && p[i] != '#') {
+				clean_text[j++] = p[i];
+			}
+		}
+		clean_text[j] = '\0';
+		len = j;
+
+		if (len == 0) continue;
+
 		if (current_len > 0) {
-			strncat(excerpt_buffer, " ", sizeof(excerpt_buffer) - current_len - 1);
-			current_len++;
+			if (current_len + 1 < MAX_PATH_LENGTH) {
+				strncat(excerpt_buffer, " ", sizeof(excerpt_buffer) - current_len - 1);
+				current_len++;
+			}
 		}
 
-		if (current_len == 0) {
-			strncat(excerpt_buffer, p, sizeof(excerpt_buffer) - current_len - 1);
+		if (current_len + len < MAX_PATH_LENGTH) {
+			strncat(excerpt_buffer, clean_text, sizeof(excerpt_buffer) - current_len - 1);
 			current_len += len;
-			if (current_len >= EXCERPT_TARGET_LEN) break; 
 		} else {
-			if (current_len + len < EXCERPT_TARGET_LEN) {
-				strncat(excerpt_buffer, p, sizeof(excerpt_buffer) - current_len - 1);
-				current_len += len;
-			} else {
-				break;
-			}
+			strncat(excerpt_buffer, clean_text, sizeof(excerpt_buffer) - current_len - 1);
+			current_len = MAX_PATH_LENGTH - 1;
+			break;
+		}
+
+		if (current_len >= EXCERPT_TARGET_LEN) {
+			break;
 		}
 	}
 	fclose(file);
-	
+
 	if (current_len > 0) {
 		return strdup(excerpt_buffer);
 	}
-	
-	return NULL;
 
+	return NULL;
 }
 
 SiteContext* create_site_context(const char* vault_path) {
