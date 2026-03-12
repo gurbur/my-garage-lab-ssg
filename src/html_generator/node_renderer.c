@@ -1,6 +1,35 @@
 #include <string.h>
+#include <ctype.h>
+#include <stdlib.h>
 
 #include "node_renderer.h"
+
+char* generate_anchor_id(const char* text) {
+	if (!text) return strdup("section");
+
+	char* id = malloc(strlen(text) + 1);
+	int j = 0;
+
+	for (int i = 0; text[i]; i++) {
+		unsigned char c = (unsigned char)text[i];
+		if (isspace(c)) {
+			id[j++] = '-';
+		} else if (isalnum(c)) {
+			id[j++] = tolower(c);
+		} else if (c >= 0x80) {
+			id[j++] = c;
+		} else if (c == '-' || c == '_') {
+			id[j++] = c;
+		}
+	}
+	id[j] = '\0';
+
+	if (j == 0) {
+		free(id);
+		return strdup("section");
+	}
+	return id;
+}
 
 static void append_escaped_html(DynamicBuffer* buffer, const char* text) {
 	if (!text) return;
@@ -24,9 +53,15 @@ static void append_escaped_html(DynamicBuffer* buffer, const char* text) {
 
 void render_opening_tag_for_node(const AstNode* node, DynamicBuffer* buffer) {
 	switch (node->type) {
-		case NODE_HEADING1:         buffer_append_formatted(buffer, "<h1>%s", node->data1); break;
-		case NODE_HEADING2:         buffer_append_formatted(buffer, "<h2>%s", node->data1); break;
-		case NODE_HEADING3:         buffer_append_formatted(buffer, "<h3>%s", node->data1); break;
+		case NODE_HEADING1:
+		case NODE_HEADING2:
+		case NODE_HEADING3: {
+			char* id = generate_anchor_id(node->data1);
+			int level = (node->type == NODE_HEADING1) ? 1 : ((node->type == NODE_HEADING2) ? 2 : 3);
+			buffer_append_formatted(buffer, "<h%d id=\"%s\">%s", level, id, node->data1);
+			free(id);
+			break;
+		}
 		case NODE_PARAGRAPH:        buffer_append_formatted(buffer, "<p>"); break;
 		case NODE_ORDERED_LIST:     buffer_append_formatted(buffer, "<ol>\n"); break;
 		case NODE_UNORDERED_LIST:   buffer_append_formatted(buffer, "<ul>\n"); break;
