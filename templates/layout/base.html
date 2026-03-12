@@ -14,7 +14,17 @@
 		<meta property="og:url" content="https://blog.gurbur.dev/">
 		<meta property="og:title" content="My Garage Lab">
 		<meta property="og:description" content="밑바닥부터 시작하는 나만의 개발 실험실">
-
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+		<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+		<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+				onload="renderMathInElement(document.body, {
+						delimiters: [
+								{left: '$$', right: '$$', display: true},
+								{left: '$', right: '$', display: false}
+						]
+				});">
+		</script>
+		<link rel="stylesheet" href="{{ base_url }}/static/css/style.css">
 	</head>
 	<body>
 		{{ component:header }}
