@@ -171,6 +171,9 @@ void generate_main_index_page(struct list_head* all_posts, TemplateContext* glob
 		add_to_context(card_context, "post_title", title_from_name);
 		add_to_context(card_context, "post_link", link_path);
 
+		const char* preview_text = sort_array[i].node->excerpt ? sort_array[i].node->excerpt : "내용이 없습니다.";
+		add_to_context(card_context, "post_excerpt", preview_text);
+
 		char* rendered_card = render_template("templates/components/simple_post_item.html", card_context);
 
 		if (rendered_card != NULL) {
@@ -244,7 +247,10 @@ void generate_all_posts_page(struct list_head* all_posts, TemplateContext* globa
 
 		add_to_context(card_context, "card_item_title", title_from_name);
 		add_to_context(card_context, "card_item_link", link_path);
-		add_to_context(card_context, "card_item_content", "더보기...");
+
+		const char* preview_text = sort_array[i].node->excerpt ? sort_array[i].node->excerpt : "내용이 없습니다.";
+		add_to_context(card_context, "card_item_content", preview_text);
+
 		char* rendered_card = render_template("templates/components/card.html", card_context);
 
 		if (rendered_card != NULL) {

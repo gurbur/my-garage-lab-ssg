@@ -21,6 +21,7 @@ static NavNode* create_nav_node(const char* name, const char* path, bool is_dir)
 	node->full_path = strdup(path);
 	node->is_directory = is_dir;
 	node->slug = NULL;
+	node->excerpt = NULL;
 
 	char output_path_buffer[MAX_PATH_LENGTH];
 	strcpy(output_path_buffer, path);
@@ -51,7 +52,42 @@ static void free_nav_node_recursively(NavNode* node) {
 	free(node->full_path);
 	free(node->output_path);
 	free(node->slug);
+	free(node->excerpt);
 	free(node);
+}
+
+static char* extract_excerpt_from_file(const char* file_path) {
+	FILE *file = fopen(file_path, "r");
+	if (!file) return NULL;
+
+	char line[MAX_PATH_LENGTH];
+
+	if (fgets(line, sizeof(line), file) && strncmp(line, "---", 3) == 0) {
+		while (fgets(line, sizeof(line), file)) {
+			if (strncmp(line, "---", 3) == 0) break;
+		}
+	} else {
+		fseek(file, 0, SEEK_SET);
+	}
+
+	char* excerpt = NULL;
+	while(fgets(line, sizeof(line), file)) {
+		char* p = line;
+		while (*p && isspace((unsigned char)*p)) p++;
+
+		if (*p == '\0') continue;
+
+		size_t len = strlen(p);
+		while(len > 0 && isspace((unsigned char)p[len - 1])) {
+			p[--len] = '\0';
+		}
+
+		excerpt = strdup(p);
+		break;
+	}
+	fclose(file);
+
+	return excerpt;
 }
 
 SiteContext* create_site_context(const char* vault_path) {
@@ -137,6 +173,8 @@ static void scan_recursively(NavNode* parent, HashTable* name_lookup, HashTable*
 
 		if (!is_dir && strstr(new_node->name, ".md")) {
 			new_node->slug = extract_slug_from_file(entry_full_path);
+
+			new_node->excerpt = extract_excerpt_from_file(entry_full_path);
 
 			if (!new_node->slug) {
 				char* name_copy = strdup(new_node->name);

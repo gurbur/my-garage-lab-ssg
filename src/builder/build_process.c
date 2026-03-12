@@ -187,7 +187,9 @@ void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* 
 						free(title_from_name);
 
 						add_to_context(card_context, "card_item_link", link_path);
-						add_to_context(card_context, "card_item_content", "내용 예시");
+
+						const char* preview_text = sorted_child->excerpt ? sorted_child->excerpt : "내용이 없습니다.";
+						add_to_context(card_context, "card_item_content", preview_text);
 
 						char* rendered_card = render_template("templates/components/card.html", card_context);
 						if (rendered_card != NULL) {

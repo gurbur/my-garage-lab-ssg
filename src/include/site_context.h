@@ -9,6 +9,7 @@ typedef struct NavNode {
 	char* full_path;
 	char* output_path;
 	char* slug;
+	char* excerpt;
 	bool is_directory;
 
 	struct list_head children;
