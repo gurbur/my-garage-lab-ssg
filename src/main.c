@@ -263,7 +263,7 @@ void generate_all_posts_page(struct list_head* all_posts, TemplateContext* globa
 	copy_context(page_context, global_context);
 	add_to_context(page_context, "list_title", "모든 글");
 	add_to_context(page_context, "title", "모든 글 보기");
-	add_to_context(page_context, "post_list_content", post_list_html);
+	add_to_context(page_context, "post_list", post_list_html);
 
 	char breadcrumb_html[MAX_PATH_LENGTH];
 	snprintf(breadcrumb_html, sizeof(breadcrumb_html), "<a href=\"%s/\">Home</a> &gt; 모든 글", base_url);
