@@ -172,10 +172,15 @@ void generate_main_index_page(struct list_head* all_posts, TemplateContext* glob
 		add_to_context(card_context, "post_link", link_path);
 
 		char* rendered_card = render_template("templates/components/simple_post_item.html", card_context);
-		buffer_append_formatted(recent_posts_buffer, "%s", rendered_card);
+
+		if (rendered_card != NULL) {
+			buffer_append_formatted(recent_posts_buffer, "%s", rendered_card);
+			free(rendered_card);
+		} else {
+			fprintf(stderr, "\t[ERROR] Main Landing page's item is failed to render: templates/components/simple_post_item.html is missing\n");
+		}
 
 		free(title_from_name);
-		free(rendered_card);
 		free_template_context(card_context);
 	}
 
