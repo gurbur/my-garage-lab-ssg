@@ -1,3 +1,11 @@
-<div class="simple-post-item">
-	<a href="{{ post_link }}">{{ post_title }}</a>
-</div>
+<article class="modern-card">
+	<a href="{{ post_link }}" class="modern-card-link">
+		<div class="modern-card-content">
+			<h3 class="modern-card-title">{{ post_title }}</h3>
+			<p class="modern-card-excerpt">{{ post_excerpt }}</p>
+		</div>
+		<div class="modern-card-footer">
+			<span class="read-more">글 읽기 <span>&rarr;</span></span>
+		</div>
+	</a>
+</article>
