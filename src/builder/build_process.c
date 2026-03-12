@@ -112,7 +112,7 @@ static char* parse_front_matter(FILE* file, TemplateContext* context) {
 }
 
 static void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* s_context, TemplateContext* global_context, HashTable* old_cache, HashTable* new_cache, struct list_head* all_posts);
-static void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_context, TemplateContext* global_context, HashTable* old_cache, HashTable* new_cache, struct list_head* all_posts);
+static void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_context, TemplateContext* global_context, HashTable* old_cache, HashTable* new_cache, struct list_head* all_posts, NavNode* prev_node, NavNode* next_node, NavNode* first_node, const char* series_name);
 
 void build_site(const char* vault_path, SiteContext* s_context, TemplateContext* global_context, HashTable* old_cache, HashTable* new_cache, struct list_head* all_posts) {
 	printf("\n---- STARTING SITE GENERATION ----\n");
@@ -234,20 +234,34 @@ void build_site_recursively(const char* vault_path, NavNode* node, SiteContext* 
 					free(content_html);
 					free(final_html);
 					free_template_context(page_context);
+
+					for (int i = 0; i < post_count; i++) {
+						NavNode* next_node = (i > 0) ? sort_array[i-1].node : NULL;
+						NavNode* prev_node = (i < post_count - 1) ? sort_array[i + 1].node : NULL;
+						NavNode* first_node = sort_array[post_count - 1].node;
+
+						process_file(vault_path, sort_array[i].node, s_context, global_context, old_cache, new_cache, all_posts, prev_node, next_node, first_node, node->name);
+					}
+					for (int i = 0; i < post_count; i++) {
+						free(sort_array[i].date);
+					}
+					free(sort_array);
 				}
 			}
 		}
 
 		NavNode* child;
 		list_for_each_entry(child, &node->children, sibling) {
-			build_site_recursively(vault_path, child, s_context, global_context, old_cache, new_cache, all_posts);
+			if (child->is_directory) {
+				build_site_recursively(vault_path, child, s_context, global_context, old_cache, new_cache, all_posts);
+			}
 		}
 	} else if (strstr(node->name, ".md")) {
-		process_file(vault_path, node, s_context, global_context, old_cache, new_cache, all_posts);
+		process_file(vault_path, node, s_context, global_context, old_cache, new_cache, all_posts, NULL, NULL, NULL, NULL);
 	}
 }
 
-void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_context, TemplateContext* global_context, HashTable* old_cache, HashTable* new_cache, struct list_head* all_posts) {
+void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_context, TemplateContext* global_context, HashTable* old_cache, HashTable* new_cache, struct list_head* all_posts, NavNode* prev_node, NavNode* next_node, NavNode* first_node, const char* series_name) {
 	printf("Processing: %s\n", current_node->full_path);
 
 	char full_input_path[MAX_PATH_LENGTH];
@@ -308,6 +322,34 @@ void process_file(const char* vault_path, NavNode* current_node, SiteContext* s_
 		}
 		fclose(md_file);
 		content_md = destroy_buffer_and_get_content(db);
+	}
+
+	const char* base_url = get_from_context(global_context, "base_url");
+	if (!base_url) base_url = "";
+
+	if (series_name) {
+		add_to_context(t_context, "series", series_name);
+	}
+
+	NavNode* target_nodes[] = { prev_node, next_node, first_node };
+	const char* link_keys[] = { "prev_post_link", "next_post_link", "first_post_link" };
+	const char* title_keys[] = { "prev_post_title", "next_post_title", "first_post_title" };
+
+	for (int i = 0; i < 3; i++) {
+		if (target_nodes[i]) {
+			char link[MAX_PATH_LENGTH];
+			snprintf(link, sizeof(link), "%s/%s", base_url, target_nodes[i]->slug);
+			add_to_context(t_context, link_keys[i], link);
+
+			char* title_no_ext = strdup(target_nodes[i]->name);
+			char* dot = strrchr(title_no_ext, '.');
+			if (dot) *dot = '\0';
+			add_to_context(t_context, title_keys[i], title_no_ext);
+			free(title_no_ext);
+		} else {
+			add_to_context(t_context, link_keys[i], "#");
+			add_to_context(t_context, title_keys[i], "해당하는 글이 없습니다.");
+		}
 	}
 
 	LIST_HEAD(token_list);

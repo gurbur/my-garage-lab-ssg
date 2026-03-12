@@ -18,6 +18,14 @@
 						<h2>목차</h2>
 						{{ table_of_contents }}
 					</div>
+					<div class="post-series-nav">
+						<h3>{{ series }} 시리즈</h3>
+						<p>
+							<strong>처음부터 보기:</strong> <a href="{{ first_post_link }}">{{ first_post_title }}</a><br>
+							<strong>이전 글:</strong> <a href="{{ prev_post_link }}">{{ prev_post_title }}</a><br>
+							<strong>다음 글:</strong> <a href="{{ next_post_link }}">{{ next_post_title }}</a>
+						</p>
+					</div>
 					<div class="post-main-content">
 						{{ post_content }}
 					</div>
