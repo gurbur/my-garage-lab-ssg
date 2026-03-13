@@ -10,6 +10,7 @@ static AstNode* parse_emphasis(ParserState* state);
 static AstNode* parse_inline_code(ParserState* state);
 static AstNode* parse_standard_link(ParserState* state);
 static AstNode* parse_obsidian_link(ParserState* state, bool is_image);
+static AstNode* parse_math(ParserState* state);
 
 void parse_inline_elements(ParserState* state, AstNode* parent_node, bool is_list_item) {
 	DynamicBuffer* text_buffer = create_dynamic_buffer(256);
@@ -41,6 +42,7 @@ void parse_inline_elements(ParserState* state, AstNode* parent_node, bool is_lis
 		AstNode* new_node = NULL;
 		if (t1->type == TOKEN_ASTERISK) new_node = parse_emphasis(state);
 		else if (t1->type == TOKEN_BACKTICK) new_node = parse_inline_code(state);
+		else if (t1->type == TOKEN_DOLLAR) new_node = parse_math(state);
 		else if (t1->type == TOKEN_EXCLAMATION) new_node = parse_obsidian_link(state, true);
 		else if (t1->type == TOKEN_LBRACKET) {
 			Token* lookahead = (t1->list.next != state->head) ? list_entry(t1->list.next, Token, list) : NULL;
@@ -270,6 +272,52 @@ static AstNode* parse_obsidian_link(ParserState* state, bool is_image) {
 		return link_node;
 	}
 	destroy_buffer_and_get_content(filename_buffer);
+	state->current_node = start_pos;
+	return NULL;
+}
+
+static AstNode* parse_math(ParserState* state) {
+	struct list_head* start_pos = state->current_node;
+	int level = 0;
+
+	while (peek_token(state) && peek_token(state)->type == TOKEN_DOLLAR) {
+		level++;
+		consume_token(state);
+		if (level == 2) break;
+	}
+
+	if (level == 0) return NULL;
+
+	DynamicBuffer* temp_buffer = create_dynamic_buffer(64);
+
+	for (int i = 0; i < level; i++) {
+		buffer_append_formatted(temp_buffer, "$");
+	}
+
+	int closing_level = 0;
+	while (peek_token(state) && peek_token(state)->type != TOKEN_EOF) {
+		Token* current = peek_token(state);
+
+		if (current->type == TOKEN_DOLLAR) {
+			closing_level++;
+			consume_token(state);
+			buffer_append_formatted(temp_buffer, "$");
+
+			if (closing_level == level) {
+				AstNode* node = create_ast_node(NODE_MATH, temp_buffer->content, NULL);
+				char* temp_content = destroy_buffer_and_get_content(temp_buffer);
+				free(temp_content);
+				return node;
+			}
+		} else {
+			closing_level = 0;
+			Token* token_to_add = consume_token(state);
+			buffer_append_formatted(temp_buffer, "%s", token_to_string(token_to_add));
+		}
+	}
+
+	char* temp_content = destroy_buffer_and_get_content(temp_buffer);
+	free(temp_content);
 	state->current_node = start_pos;
 	return NULL;
 }

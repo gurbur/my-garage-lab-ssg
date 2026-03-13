@@ -23,6 +23,7 @@ typedef enum {
 	NODE_ITALIC_AND_BOLD,
 	NODE_CODE,
 	NODE_LINK,
+	NODE_MATH,
 	NODE_SOFT_BREAK,
 } AstNodeType;
 

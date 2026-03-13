@@ -74,6 +74,7 @@ const char* token_to_string(const Token* token) {
 		case TOKEN_LBRACKET: return "["; case TOKEN_RBRACKET: return "]";
 		case TOKEN_BACKTICK: return "`"; case TOKEN_EXCLAMATION: return "!";
 		case TOKEN_GREATER_THAN: return ">"; case TOKEN_BACKSLASH: return "\\";
+		case TOKEN_DOLLAR: return "$";
 		default: return "";
 	}
 }

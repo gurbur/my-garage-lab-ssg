@@ -19,6 +19,7 @@ typedef enum {
 	TOKEN_EXCLAMATION, // !
 	TOKEN_GREATER_THAN,// >
 	TOKEN_BACKSLASH,   // \.
+	TOKEN_DOLLAR,			 // $
 	TOKEN_EOF,         // End of File
 } TokenType;
 

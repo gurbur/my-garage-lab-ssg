@@ -12,7 +12,7 @@ void handle_fenced_code_block(TokenizerState* state);
 void handle_number(TokenizerState* state);
 
 static bool is_punctuation(char c) {
-	return strchr("#*-[]()!>\\.\n\t`", c) != NULL;
+	return strchr("#*-[]()!>\\.\n\t`$", c) != NULL;
 }
 
 void tokenize_string(const char* content, struct list_head* output) {

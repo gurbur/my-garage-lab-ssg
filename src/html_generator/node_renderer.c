@@ -100,6 +100,7 @@ void render_inline_node(const AstNode* node, DynamicBuffer* buffer, TemplateCont
 		case NODE_ITALIC:           buffer_append_formatted(buffer, "<em>%s</em>", node->data1); break;
 		case NODE_BOLD:             buffer_append_formatted(buffer, "<strong>%s</strong>", node->data1); break;
 		case NODE_ITALIC_AND_BOLD:  buffer_append_formatted(buffer, "<em><strong>%s</strong></em>", node->data1); break;
+		case NODE_MATH:							append_escaped_html(buffer, node->data1); break;
 		case NODE_CODE:
 			buffer_append_formatted(buffer, "<code>");
 			append_escaped_html(buffer, node->data1);

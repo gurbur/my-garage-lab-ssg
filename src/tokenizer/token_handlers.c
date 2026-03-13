@@ -43,6 +43,7 @@ void handle_punctuation(TokenizerState* state, char c) {
 		case '\\': add_token(TOKEN_BACKSLASH, NULL, state->tokens); break;
 		case '.': add_token(TOKEN_DOT, NULL, state->tokens); break;
 		case '`': add_token(TOKEN_BACKTICK, NULL, state->tokens); break;
+		case '$': add_token(TOKEN_DOLLAR, NULL, state->tokens); break;
 	}
 	state->current++;
 }
