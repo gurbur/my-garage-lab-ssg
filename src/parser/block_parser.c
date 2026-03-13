@@ -237,7 +237,6 @@ static AstNode* parse_code_block(ParserState* state) {
 
 static AstNode* parse_blockquote(ParserState* state) {
 	AstNode* blockquote_node = create_ast_node(NODE_BLOCKQUOTE, NULL, NULL);
-	consume_token(state);
 
 	while (peek_token(state) && peek_token(state)->type == TOKEN_GREATER_THAN) {
 		consume_token(state);
