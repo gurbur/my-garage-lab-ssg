@@ -13,6 +13,7 @@ static AstNode* parse_line(ParserState* state);
 static AstNode* parse_code_block(ParserState* state);
 static AstNode* parse_list(ParserState* state, int expected_indent);
 static AstNode* parse_list_item(ParserState* state, int item_indent);
+static AstNode* parse_blockquote(ParserState* state);
 
 AstNode* parse_block(ParserState* state) {
 	struct list_head* start_pos = state->current_node;
@@ -31,6 +32,10 @@ AstNode* parse_block(ParserState* state) {
 		case TOKEN_HASH:
 			consume_indent(state);
 			return parse_heading(state);
+
+		case TOKEN_GREATER_THAN:
+			consume_indent(state);
+			return parse_blockquote(state);
 
 		case TOKEN_DASH:
 		case TOKEN_ASTERISK: {
@@ -228,4 +233,28 @@ static AstNode* parse_code_block(ParserState* state) {
 		return NULL;
 	}
 	return create_ast_node(NODE_CODE_BLOCK, code_content, lang);
+}
+
+static AstNode* parse_blockquote(ParserState* state) {
+	AstNode* blockquote_node = create_ast_node(NODE_BLOCKQUOTE, NULL, NULL);
+	consume_token(state);
+
+	while (peek_token(state) && peek_token(state)->type == TOKEN_GREATER_THAN) {
+		consume_token(state);
+
+		parse_inline_elements(state, blockquote_node, true);
+
+		if (peek_token(state) && peek_token(state)->type == TOKEN_NEWLINE) {
+			consume_token(state);
+
+			if (peek_token(state) && peek_token(state)->type == TOKEN_GREATER_THAN) {
+				AstNode* break_node = create_ast_node(NODE_SOFT_BREAK, NULL, NULL);
+				add_child_node(blockquote_node, break_node);
+			}
+		} else {
+			break;
+		}
+	}
+
+	return blockquote_node;
 }

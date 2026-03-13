@@ -63,6 +63,7 @@ void render_opening_tag_for_node(const AstNode* node, DynamicBuffer* buffer) {
 			break;
 		}
 		case NODE_PARAGRAPH:        buffer_append_formatted(buffer, "<p>"); break;
+		case NODE_BLOCKQUOTE:				buffer_append_formatted(buffer, "<blockquote>\n"); break;
 		case NODE_ORDERED_LIST:     buffer_append_formatted(buffer, "<ol>\n"); break;
 		case NODE_UNORDERED_LIST:   buffer_append_formatted(buffer, "<ul>\n"); break;
 		case NODE_LIST_ITEM:        buffer_append_formatted(buffer, "<li>"); break;
@@ -84,6 +85,7 @@ void render_closing_tag_for_node(const AstNode* node, DynamicBuffer* buffer) {
 		case NODE_HEADING2:         buffer_append_formatted(buffer, "</h2>\n"); break;
 		case NODE_HEADING3:         buffer_append_formatted(buffer, "</h3>\n"); break;
 		case NODE_PARAGRAPH:        buffer_append_formatted(buffer, "</p>\n"); break;
+		case NODE_BLOCKQUOTE:				buffer_append_formatted(buffer, "</blockquote>\n"); break;
 		case NODE_ORDERED_LIST:     buffer_append_formatted(buffer, "</ol>\n"); break;
 		case NODE_UNORDERED_LIST:   buffer_append_formatted(buffer, "</ul>\n"); break;
 		case NODE_LIST_ITEM:        buffer_append_formatted(buffer, "</li>\n"); break;
